@@ -172,17 +172,23 @@ const numbersRegex = /^[0-9]*$/
    
 
 
-const fetchRijksCollections = async (page, finish,type,searchTerm,sortQuery)=>{
+const fetchRijksCollections = async (p, ps,type,searchTerm,sortQuery,involvedMaker)=>{
+  
+  if(!p) throw{status:400,message:'Page number must be given'}
+  if(!ps) throw{status:400,message:'Results per page must be given'}
+ 
+  
   const artCollection = [];
 
   const params = {
     key:rijks_api_key,
-    p:page,
-    ps:finish,
+    p:p,
+    ps:ps,
     imgonly:true,
     q:searchTerm,
     type:type,
-    s:sortQuery
+    s:sortQuery,
+    involvedMaker:involvedMaker
   }
   try {
     
@@ -190,7 +196,7 @@ const fetchRijksCollections = async (page, finish,type,searchTerm,sortQuery)=>{
     const artCollectionArr = artCollectionObj.data.artObjects;
     const artCollectionArrObjNo = artCollectionArr.map((artObject)=>artObject.objectNumber)
 
-
+    if(artCollectionArrObjNo.length===0) throw({status:400,message:'Search query returned no artists'})
     for(i=0; i<artCollectionArrObjNo.length ;i++){
 
       try {
@@ -221,7 +227,7 @@ const fetchRijksCollections = async (page, finish,type,searchTerm,sortQuery)=>{
         
 
       } catch (error) {
-        console.log(error)
+        throw error
       }
 
     }
@@ -231,6 +237,7 @@ const fetchRijksCollections = async (page, finish,type,searchTerm,sortQuery)=>{
 
 
   } catch (error) {
+    throw error
     
   } 
 

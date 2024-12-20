@@ -41,10 +41,10 @@ const getMetArtCollections = async (req,res,next)=>{
 }
 
 const getRijksCollections = async (req,res,next)=>{
-    const {page,finish,type,searchTerm,sortQuery} = req.query
+    const {p,ps,type,searchTerm,s,involvedMaker} = req.query
 
     try {
-        const rijksCollectionArr = await fetchRijksCollections(page, finish,type,searchTerm,sortQuery)
+        const rijksCollectionArr = await fetchRijksCollections(p, ps,type,searchTerm,s,involvedMaker)
         res.status(200).send({rijksArtWorks:rijksCollectionArr})
         
     } catch (error) {
