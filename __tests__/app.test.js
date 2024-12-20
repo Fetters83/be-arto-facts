@@ -331,6 +331,39 @@ describe('/api/collections/ArtInstitueChicago',()=>{
 
 })
 
+describe('api/collections/ArtInstitueChicago/:id',()=>{
+  test('GET 200: call to Chicago Institute of Art API by id returns an object with all the correct keys and datatypes of a single artwork',async()=>{
+    const {body} = await request(app)
+    .get('/api/collections/ArtInstitueChicago/25247')
+    .expect(200)
+    expect(typeof body.classification === 'string').toBe(true)
+    expect(Array.isArray(body.medium)).toBe(true)
+    expect(typeof body.id === 'number').toBe(true)
+    expect(typeof body.title === 'string').toBe(true)
+    expect(typeof body.artist === 'string').toBe(true)
+    expect(typeof body.date === 'number').toBe(true)
+    expect(typeof body.department === 'string').toBe(true)
+    expect(typeof body.img === 'string').toBe(true)
+    expect(typeof body.smallImg === 'string').toBe(true)
+    expect(typeof body.country === 'string').toBe(true)
+    expect(typeof body.creditedTo === 'string').toBe(true)
+    expect(typeof body.alt === 'string').toBe(true)
+    expect(typeof body.description === 'string').toBe(true)
+
+  })
+  test('GET 400:call to API with invalid id data type returns a 400 status and an error message',async()=>{
+    const {body} = await request(app)
+    .get('/api/collections/ArtInstitueChicago/NOTANID')
+    .expect(400)
+    expect(body.message).toBe('Artwork Id must of data type number')
+  });
+  test('GET 404:call to API with non existent id returns a 404 status and an error message',async()=>{
+    const {body} = await request(app)
+    .get('/api/collections/ArtInstitueChicago/999999999999')
+    .expect(404)
+    expect(body.message).toBe('Artwork Id does not exist')
+  })
+})
 
 
 

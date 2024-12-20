@@ -494,4 +494,62 @@ const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,arti
 
 }
 
-module.exports = {fetchMetArtCollections,fetchRijksCollections,fetchArtInstituteChigagoCollections,fetchMetArtDepartments,fetchMetArtPieceById,fetchRijksArtPieceById}
+const fetchArtInstituteChigagoArtPieceById = async(id)=>{
+ 
+  try {
+    
+    if(!id) throw {status:404,message:'Artwork Id must be provided'}
+  
+    if(isNaN(Number(id))) throw {status:400,message:'Artwork Id must of data type number'}
+   
+    const artworkId = parseInt(id)
+    const artworkData = await axios(`https://api.artic.edu/api/v1/artworks/${artworkId}`)
+   
+    
+
+
+    if (!artworkData || !artworkData.data.data) {
+      throw { status: 404, message: 'Artwork Id does not exist' };
+    }
+    const artworkDetails = artworkData.data.data;
+    //Seperately set the base url for fetching image details - details from artworkDetails will be used to concatenate info to this url 
+    const artworkImgDetails = artworkData.data.config
+
+ //Push into the artCollection array an new object containing the artwork data from the artworkDetails variable
+ //Images use a data from artworkImgDetails and artworkDetails       
+    return{
+        classification:artworkDetails.artwork_type_title,
+        medium:artworkDetails.term_titles,
+        id:artworkDetails.id,  
+        title: artworkDetails.title || 'Unknown',
+        artist: artworkDetails.artist_title || 'Unknown Artist',
+        date: artworkDetails.date_end || 'Unknown',
+        department: artworkDetails.department_title,
+        img:`${artworkImgDetails.iiif_url}/${artworkDetails.image_id}/full/600,/0/default.jpg`,
+        smallImg:`${artworkImgDetails.iiif_url}/${artworkDetails.image_id}/full/843,/0/default.jpg`,
+        country: artworkDetails.place_of_origin || 'Unknown',
+        creditedTo: artworkDetails.credit_line || 'Credited to unknown',
+        alt: artworkDetails.thumbnail?.alt_text===undefined ?`piece from the ${artworkDetails.department_title} department`:artworkDetails.thumbnail.alt_text,
+        description:artworkDetails.description || 'No description available'
+      };
+    
+
+  } catch (error) {
+
+    if (error.response && error.response.status === 404) {
+      throw { status: 404, message: 'Artwork Id does not exist' };    
+  } else if (error.message) {
+    throw error; 
+  } else {
+   
+    throw { status: 500, message: 'An unexpected error occurred' };
+  }
+
+
+    
+  }
+ 
+  
+}
+
+module.exports = {fetchMetArtCollections,fetchRijksCollections,fetchArtInstituteChigagoCollections,fetchMetArtDepartments,fetchMetArtPieceById,fetchRijksArtPieceById,fetchArtInstituteChigagoArtPieceById}
