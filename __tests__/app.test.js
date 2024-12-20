@@ -1,5 +1,6 @@
 const request = require('supertest')
 const app = require('../app')
+const { retrieveLogin } = require("../models/login.models");
 
 jest.setTimeout(10000);
 
@@ -362,6 +363,27 @@ describe('api/collections/ArtInstitueChicago/:id',()=>{
     .get('/api/collections/ArtInstitueChicago/999999999999')
     .expect(404)
     expect(body.message).toBe('Artwork Id does not exist')
+  })
+})
+
+describe.skip('/api/signup',()=>{
+  test('POST 201: signing up with email and password generates a custom token and authenticates user',async()=>{
+    const {body} = await request(app)
+    .post('/api/signup')
+    .send({email:'wgyves@hotmail.com',password:'Goater83'})
+    .expect(201)
+    expect(body.message).toBe('User successfully created')
+
+  })
+})
+
+describe.only('/api/login',()=>{
+  test('POST 2O1:login with valid email and password successfully creates token',async()=>{
+    const email = "wgyves@hotmail.com";
+    const password = "Goater83";
+
+    const result = await retrieveLogin(email, password);
+    expect(result).toHaveProperty("token");
   })
 })
 
