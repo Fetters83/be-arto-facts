@@ -174,9 +174,17 @@ const numbersRegex = /^[0-9]*$/
 
 const fetchRijksCollections = async (p, ps,type,searchTerm,sortQuery,involvedMaker)=>{
   
+  const numbersRegex = /^[0-9]*$/
+
+  if(searchTerm && numbersRegex.test(searchTerm)) throw{status:400,message:'searchTerm must be a string data type'}
+  if(sortQuery && numbersRegex.test(sortQuery)) throw{status:400,message:'sortQuery must be a string data type'}
+  if(type && numbersRegex.test(type)) throw{status:400,message:'type must be a string data type'}
+  if(involvedMaker && numbersRegex.test(involvedMaker)) throw{status:400,message:'involvedMaker must be a string data type'}
   if(!p) throw{status:400,message:'Page number must be given'}
   if(!ps) throw{status:400,message:'Results per page must be given'}
- 
+  
+  const validSortQuerys = ['relevance','objectType','chronologic','achronologic','artist','artistdesc']
+  if(!validSortQuerys.includes(sortQuery)) throw({status:400,message:'invalid sort query'})
   
   const artCollection = [];
 
@@ -244,31 +252,38 @@ const fetchRijksCollections = async (p, ps,type,searchTerm,sortQuery,involvedMak
 
 }
 
-const fetchArtInstituteChigagoCollections = async (page,finish,placeOfOrigin,artistName,artTypeTitle,searchTerm)=>{
+const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,artistName,artTypeTitle,q)=>{
 
 
+  const numbersRegex = /^[0-9]*$/
+
+  if(placeOfOrigin && numbersRegex.test(placeOfOrigin)) throw({status:400,message:'placeOfOrigin must be a string data type'})
+  if(artistName && numbersRegex.test(artistName)) throw({status:400,message:'artistName must be a string data type'})
+  if(artTypeTitle && numbersRegex.test(artTypeTitle)) throw({status:400,message:'artTypeTitle must be a string data type'})
+  if(q && numbersRegex.test(q)) throw({status:400,message:'query must be a string data type'})      
 
    //Create the parameters for the axios to search all artwork id's that meet the search crtieria - page(set the page number) 
    // limit(number of results per page), q(free text search term)
    //other properties will be added to params object dynamically below
    const params = {
     page:page,
-    limit:finish,
-    q:searchTerm
+    limit:limit,
+    q:q
    }
 
    //set an index value to 0 at first - elastic query results look like below
    //query[bool][must][0][match_phrase][place_of_origin]` - the more search criteria we add the more of these lines we must add
    //if there are two search criterias there will be two of these lines in the array - se we musy dynamically set [must][setNumber here]
    let currentIndex = 0; // Track the current index for the `must` array
-
+   
    //If placeOfOrigin was passed in as a query..
-   if (placeOfOrigin) {
+
+    if (placeOfOrigin) {
     //Add to the params the below elastic search syntax - currentIndex will be 0 for this property
      params[`query[bool][must][${currentIndex}][match_phrase][place_of_origin]`] = placeOfOrigin;
      currentIndex++; // Increment the index for the next condition
    }
- 
+   
    //If artistName was passed in as a query..
    if (artistName) {
      //Add to the params the below elastic search syntax - currentIndex will be 1 if placeOfOrigin was passed in, 0 if not
@@ -287,24 +302,24 @@ const fetchArtInstituteChigagoCollections = async (page,finish,placeOfOrigin,art
    if (isNaN(Number(page))) {
     throw { status: 400, message: 'page must be a number data type' };
   }
-
-  if (isNaN(Number(finish))) {
-    throw { status: 400, message: 'Number of results (finish) must be a number data type' };
+  
+  if (isNaN(Number(limit))) {
+    throw { status: 400, message: 'Number of results (limit) must be a number data type' };
   }
-
-  if (isNaN(Number(departmentId))) {
+ 
+ /*  if (departmentId && isNaN(Number(departmentId))) {
     throw { status: 400, message: 'Department ID must be a number data type' };
-  }
-
-  if (typeof artTypeTitle !== 'string') {
+  } */
+  
+  if (artTypeTitle && typeof artTypeTitle !== 'string') {
     throw { status: 400, message: 'Artwork type query must be a string data type' };
   }
-
-  if (typeof searchTerm !== 'string') {
+  
+  if (q && typeof q !== 'string') {
     throw { status: 400, message: 'Free search query must be a string data type' };
   }
         
-
+ 
    //1.First try - get a list of artwork IDs that match the criteria from the params object above ({params} is passed into the axio request)
    //The result will something like https://api.artic.edu/api/v1/artworks/search?page=1&limit=10&query[bool][must][0][match_phrase][place_of_origin]=China&query[bool][must][1][match_phrase][artwork_type_title]=Painting'
     try {
@@ -312,16 +327,16 @@ const fetchArtInstituteChigagoCollections = async (page,finish,placeOfOrigin,art
 
  
 
-
-
+      
 
         //Make call the API for searching artwork IDs and set to getAvailableIDs
         const getAvailableIDs = await axios('https://api.artic.edu/api/v1/artworks/search',{params})
         //Once completed - set availableArtworksObjects to the aboves data.data property where the actual array of objects exists
         const availableArtWorksObjects = getAvailableIDs.data.data;
+        
         //Iterate through the availableArtWorksObjects array and create a new array called artworkIds containing just the ID's
         const artworkIds = availableArtWorksObjects.map((artworkObj) =>artworkObj.id)
-        
+       
         //Set an empty artCollections array
         const artCollection = []
            
@@ -333,6 +348,7 @@ const fetchArtInstituteChigagoCollections = async (page,finish,placeOfOrigin,art
 
                 //2 - Get individual artworks
                 try {
+                 
                     //Set artworkData to the result of the axios request
                     const artworkData = await axios(`https://api.artic.edu/api/v1/artworks/${artworkIds[i]}`)
                     //Set the artworkDetails variable to the value of artworkData and it's property data, then data again
@@ -375,7 +391,7 @@ const fetchArtInstituteChigagoCollections = async (page,finish,placeOfOrigin,art
     }//Catch any errors resulting ///1.First try - get a list of artwork IDs 
     catch (error) {
     
-  
+        if(error) throw error
         return { status:error.status,message:error.message || 'An error occurred', artCollection: [] };
       
     }
