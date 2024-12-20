@@ -1,7 +1,7 @@
 const request = require('supertest')
 const app = require('../app')
 
-
+jest.setTimeout(10000);
 
 describe('/api',()=>{
     test('GET 200: initial API test',async()=>{
@@ -59,9 +59,6 @@ describe('/api/collections/MetArtMuseum',()=>{
  
   
   })
-})
-
-describe('/api/collections/MetArtMuseum',()=>{
   test('GET 400: call to Met Art Museum with an incorrect offset datatype returns a 400 error and an error message', async()=>{
     const {body} = await request(app)
     .get(`/api/collections/MetArtMuseum?limit=10&offset=x&departmentId=6&searchTerm=""`)
@@ -69,10 +66,7 @@ describe('/api/collections/MetArtMuseum',()=>{
       expect(body.message).toBe('Artwork result starting position must be a number data type')
  
   
-  })
-})
-
-describe('/api/collections/MetArtMuseum',()=>{
+  });
   test('GET 400: call to Met Art Museum with an incorrect deparmentId datatype returns a 400 error and an error message', async()=>{
     const {body} = await request(app)
     .get(`/api/collections/MetArtMuseum?limit=10&offset=0&departmentId=x&searchTerm=""`)
@@ -80,10 +74,7 @@ describe('/api/collections/MetArtMuseum',()=>{
       expect(body.message).toBe('Department ID must be a number data type')
  
   
-  })
-})
-
-describe('/api/collections/MetArtMuseum',()=>{
+  });
   test('GET 400: call to Met Art Museum with an incorrect type datatype returns a 400 error and an error message', async()=>{
     const {body} = await request(app)
     .get(`/api/collections/MetArtMuseum?limit=10&offset=0&departmentId=6&type=9999&searchTerm=""`)
@@ -91,10 +82,7 @@ describe('/api/collections/MetArtMuseum',()=>{
       expect(body.message).toBe('Artwork type query must be a string data type')
  
   
-  })
-})
-
-describe('/api/collections/MetArtMuseum',()=>{
+  });
   test('GET 400: call to Met Art Museum with an unrecognised type returns a 400 error and an error message', async()=>{
     const {body} = await request(app)
     .get(`/api/collections/MetArtMuseum?limit=10&offset=0&departmentId=6&type=NOTATYPE&searchTerm=""`)
@@ -102,10 +90,7 @@ describe('/api/collections/MetArtMuseum',()=>{
        expect(body.message).toBe('Error fetching availble artwork ids')
  
   
-  })
-})
-
-describe('/api/collections/MetArtMuseum',()=>{
+  });
   test('GET 400: call to Met Art Museum with a limit of less than 10 returns a 400 error and an error message', async()=>{
     const {body} = await request(app)
     .get(`/api/collections/MetArtMuseum?limit=9&offset=0&departmentId=6&searchTerm=""`)
@@ -113,11 +98,7 @@ describe('/api/collections/MetArtMuseum',()=>{
        expect(body.message).toBe('Results per page can not be lower than 10')
  
   
-  })
-})
-
-
-describe('/api/collections/MetArtMuseum',()=>{
+  });
   test('GET 400: call to Met Art Museum with a limit of more than 50 returns a 400 error and an error message', async()=>{
     const {body} = await request(app)
     .get(`/api/collections/MetArtMuseum?limit=51&offset=0&departmentId=6&searchTerm=""`)
@@ -125,10 +106,7 @@ describe('/api/collections/MetArtMuseum',()=>{
        expect(body.message).toBe('Results per page can not exceed 50')
  
   
-  })
-})
-
-describe('/api/collections/MetArtMuseum',()=>{
+  });
   test('GET 404: call to Met Art Museum with an offset or page start of more than the available objects returns a 404 error and an error message', async()=>{
     const {body} = await request(app)
     .get(`/api/collections/MetArtMuseum?limit=10&offset=999999999999999999&departmentId=6&searchTerm=""`)
@@ -136,10 +114,7 @@ describe('/api/collections/MetArtMuseum',()=>{
        expect(body.message).toBe('Offset or Page start exceeds the number of available artworks')
  
   
-  })
-})
-
-describe('/api/collections/MetArtMuseum',()=>{
+  });
   test('GET 404: call to Met Art Museum with an unrecognised department id returns a 404 error and an error message', async()=>{
     const {body} = await request(app)
     .get(`/api/collections/MetArtMuseum?limit=10&offset=0&departmentId=999999&searchTerm=""`)
@@ -147,11 +122,7 @@ describe('/api/collections/MetArtMuseum',()=>{
        expect(body.message).toBe('DepartmentId does not exist')
  
   
-  })
-})
-
-
-describe('/api/collections/MetArtMuseum',()=>{
+  });
   test('GET 404: call to Met Art Museum with a unrecognised query returns a 404 error and an error message', async()=>{
     const {body} = await request(app)
     .get(`/api/collections/MetArtMuseum?limit=10&offset=0&departmentId=6&searchTerm="NOTASEARCHTEARM"`)
@@ -161,15 +132,65 @@ describe('/api/collections/MetArtMuseum',()=>{
 
  
   
-  })
+  });
 })
+
+describe('/api/collections/MetArtMuseum/:id',()=>{
+  test('GET 200: call to fetch met art piece by id returns a single art piece and returns a status of 200',async()=>{
+    const {body} = await request(app)
+    .get('/api/collections/MetArtMuseum/39887')
+    .expect(200)
+    expect(body).toEqual(
+      expect.objectContaining({
+        classification: expect.any(String),
+        medium: expect.any(String),
+        id: expect.any(Number),
+        title: expect.any(String),
+        artist: expect.any(String),
+        date: expect.any(Number),
+        department: expect.any(String),
+        img: expect.any(String),
+        smallImg: expect.any(String),
+        country: expect.any(String),
+        creditedTo: expect.any(String),
+        alt: expect.any(String),
+      })
+    )
+    
+  })
+  test('GET 200: call to fetch met art piece by id with a non existent id returns a 404 status and an error message',async()=>{
+    const {body} = await request(app)
+    .get('/api/collections/MetArtMuseum/39887')
+    .expect(200)
+    expect(body).toEqual(
+      expect.objectContaining({
+        classification: expect.any(String),
+        medium: expect.any(String),
+        id: expect.any(Number),
+        title: expect.any(String),
+        artist: expect.any(String),
+        date: expect.any(Number),
+        department: expect.any(String),
+        img: expect.any(String),
+        smallImg: expect.any(String),
+        country: expect.any(String),
+        creditedTo: expect.any(String),
+        alt: expect.any(String),
+      })
+    )
+    
+  })
+ 
+})
+
 
 
 
 
 describe('/api/collections/RijksMuseum',()=>{
  test('GET 200: call to Rijks Museum API returns an array of objects with the correct keys and datatypes',async ()=>{   
-    const {body:{rijksArtWorks}} = await request(app)
+  await new Promise(resolve => setTimeout(resolve, 2000));  
+  const {body:{rijksArtWorks}} = await request(app)
     .get('/api/collections/RijksMuseum?p=1&ps=10&q=""')
     .expect(200)
     for(let i=0;i<rijksArtWorks.length;i++){

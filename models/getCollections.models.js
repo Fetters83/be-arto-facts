@@ -170,7 +170,40 @@ const numbersRegex = /^[0-9]*$/
   };
   
    
+const fetchMetArtPieceById = async(id)=>{
+  if(!id) throw {status:404,message:'Artwork Id must be provided'}
 
+
+  try {
+    const getArtPiece = await axios(
+      `https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`
+    );
+
+    if(!getArtPiece) throw{status:404,message:'Artwork id does not exist'}
+    const artPiece = getArtPiece.data
+
+
+    
+    return {
+      classification:artPiece.classification,
+      medium:artPiece.medium,
+      id:artPiece.objectID,  
+      title: artPiece.title || 'Unknown',
+      artist: artPiece.artistDisplayName || 'Unknown Artist',
+      date: artPiece.objectEndDate || artPiece.objectDate,
+      department: artPiece.department,
+      img:artPiece.primaryImage,
+      smallImg: artPiece.primaryImageSmall,
+      country: artPiece.country || 'Unknown',
+      creditedTo: artPiece.creditLine || 'Credited to unknown',
+      alt: artPiece.objectName || 'Unknown Object Type',
+    }
+  } catch (error) {
+
+    throw error
+    
+  }
+}
 
 const fetchRijksCollections = async (p, ps,type,searchTerm,sortQuery,involvedMaker)=>{
   
@@ -184,7 +217,7 @@ const fetchRijksCollections = async (p, ps,type,searchTerm,sortQuery,involvedMak
   if(!ps) throw{status:400,message:'Results per page must be given'}
   
   const validSortQuerys = ['relevance','objectType','chronologic','achronologic','artist','artistdesc']
-  if(!validSortQuerys.includes(sortQuery)) throw({status:400,message:'invalid sort query'})
+  if(sortQuery && !validSortQuerys.includes(sortQuery)) throw({status:400,message:'invalid sort query'})
   
   const artCollection = [];
 
@@ -399,4 +432,4 @@ const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,arti
 
 }
 
-module.exports = {fetchMetArtCollections,fetchRijksCollections,fetchArtInstituteChigagoCollections,fetchMetArtDepartments}
+module.exports = {fetchMetArtCollections,fetchRijksCollections,fetchArtInstituteChigagoCollections,fetchMetArtDepartments,fetchMetArtPieceById}

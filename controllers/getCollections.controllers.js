@@ -1,4 +1,4 @@
-const { fetchMetArtCollections, fetchArtInstituteChigagoCollections, fetchMetArtDepartments, fetchRijksCollections } = require("../models/getCollections.models")
+const { fetchMetArtCollections, fetchArtInstituteChigagoCollections, fetchMetArtDepartments, fetchRijksCollections, fetchMetArtPieceById } = require("../models/getCollections.models")
 
 
 const getMetArtDepartments = async (req,res,next) =>{
@@ -13,6 +13,7 @@ const getMetArtDepartments = async (req,res,next) =>{
         next(error)
     }
 }
+
 
 
 
@@ -40,6 +41,18 @@ const getMetArtCollections = async (req,res,next)=>{
 
 }
 
+const getMetPieceById = async (req,res,next)=>{
+    const {id} = req.params
+
+    try {
+        const metArtPiece = await fetchMetArtPieceById(id)
+       
+        res.status(200).send(metArtPiece)
+    } catch (error) {
+        next(error)
+    }
+
+}
 const getRijksCollections = async (req,res,next)=>{
     const {p,ps,type,searchTerm,s,involvedMaker} = req.query
 
@@ -80,4 +93,4 @@ const getArtInstituteChigagoCollections = async (req,res,next)=>{
 
 }
 
-module.exports = {getMetArtCollections,getRijksCollections,getArtInstituteChigagoCollections,getMetArtDepartments}
+module.exports = {getMetArtCollections,getRijksCollections,getArtInstituteChigagoCollections,getMetArtDepartments,getMetPieceById}
