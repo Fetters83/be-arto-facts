@@ -1,5 +1,6 @@
 const axios = require('axios')
 const {config} = require('../firebaseConfig')
+const { messaging } = require('firebase-admin')
 const rijks_api_key = config.rijks_api_key
 const user_collection_id=config.user_collection_id
 
@@ -181,6 +182,7 @@ const fetchMetArtPieceById = async(id)=>{
 
     if(!getArtPiece) throw{status:404,message:'Artwork id does not exist'}
     const artPiece = getArtPiece.data
+    
 
 
     
@@ -236,7 +238,7 @@ const fetchRijksCollections = async (p, ps,type,searchTerm,sortQuery,involvedMak
     const artCollectionObj = await axios('https://www.rijksmuseum.nl/api/en/collection',{params})
     const artCollectionArr = artCollectionObj.data.artObjects;
     const artCollectionArrObjNo = artCollectionArr.map((artObject)=>artObject.objectNumber)
-
+    
     if(artCollectionArrObjNo.length===0) throw({status:400,message:'Search query returned no artists'})
     for(i=0; i<artCollectionArrObjNo.length ;i++){
 
@@ -249,8 +251,18 @@ const fetchRijksCollections = async (p, ps,type,searchTerm,sortQuery,involvedMak
         })
         
         const artWorkDetails = data.data.artObject
+        
+        if (
+          !artWorkDetails.physicalMedium || 
+          !artWorkDetails.objectTypes || 
+          !artWorkDetails.objectNumber || 
+          !artWorkDetails.webImage?.url
+        ) {
+         
+          continue; 
+        }
 
-      
+
         artCollection.push({
           classification:artWorkDetails.physicalMedium,
           medium:artWorkDetails.objectTypes,
@@ -268,7 +280,8 @@ const fetchRijksCollections = async (p, ps,type,searchTerm,sortQuery,involvedMak
         
 
       } catch (error) {
-        throw error
+        continue;
+        
       }
 
     }
@@ -283,6 +296,55 @@ const fetchRijksCollections = async (p, ps,type,searchTerm,sortQuery,involvedMak
   } 
 
 
+}
+
+const fetchRijksArtPieceById = async(id)=>{
+   
+
+  try {
+     
+  if(!id) throw {status:404,message:'Artwork Id must be provided'}
+  
+
+
+    const getArtPiece = await axios(`https://www.rijksmuseum.nl/api/en/collection/${id}`,{
+      params:{
+        key:rijks_api_key
+      }
+    })
+   
+    if (!getArtPiece || !getArtPiece.data.artObject) {
+      throw { status: 404, message: 'Artwork Id does not exist' };
+    }
+  
+    const artPiece = getArtPiece.data.artObject
+    
+   
+   
+    return({
+      classification:artPiece.physicalMedium,
+      medium:artPiece.objectTypes,
+      id:artPiece.objectNumber,  
+      title: artPiece.title || 'Unknown',
+      artist: artPiece.principalOrFirstMaker || 'Unknown Artist',
+      date: artPiece.dating.yearLate || 'Unknown',
+      department: artPiece.objectCollection || 'Unspecified Department',
+      img:artPiece.webImage.url,
+      country: artPiece.classification?.places.length>0? artPiece.classification.places:'Unknown',
+      creditedTo: artPiece.acquisition?.creditLine || 'Credited to unknown',
+      alt: `artpiece by ${artPiece.principalOrFirstMaker  || 'Unknown artist'}`,
+    })
+  } catch (error) {
+    
+    if (error.response && error.response.status === 404) {
+      throw { status: 404, message: 'Artwork Id does not exist' };    
+  } else if (error.message) {
+    throw error; 
+  } else {
+   
+    throw { status: 500, message: 'An unexpected error occurred' };
+  }
+}
 }
 
 const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,artistName,artTypeTitle,q)=>{
@@ -432,4 +494,4 @@ const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,arti
 
 }
 
-module.exports = {fetchMetArtCollections,fetchRijksCollections,fetchArtInstituteChigagoCollections,fetchMetArtDepartments,fetchMetArtPieceById}
+module.exports = {fetchMetArtCollections,fetchRijksCollections,fetchArtInstituteChigagoCollections,fetchMetArtDepartments,fetchMetArtPieceById,fetchRijksArtPieceById}

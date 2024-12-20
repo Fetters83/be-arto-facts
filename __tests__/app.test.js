@@ -234,7 +234,35 @@ describe('/api/collections/RijksMuseum',()=>{
     .expect(400)
     expect(body.message).toBe('searchTerm must be a string data type')
   })
-
+  
+  test('GET 200: call to Rijks Museum API to get artpiece by id returns an object with all the correct keys and datatypes of a single ar piece',async()=>{
+    await new Promise(resolve => setTimeout(resolve, 2000));  
+    const {body} = await request(app)
+    .get('/api/collections/RijksMuseum/AK-MAK-292')
+    .expect(200)
+   
+      expect(Array.isArray(body.classification) || typeof body.classification === 'string').toBe(true)
+      expect(Array.isArray(body.medium) || typeof body.classification === 'string').toBe(true)
+      expect(typeof body.id === 'string').toBe(true)
+      expect(typeof body.title === 'string').toBe(true)
+      expect(typeof body.artist === 'string').toBe(true)
+      expect(typeof body.date === 'string' || typeof body.date === 'number').toBe(true)
+      expect(Array.isArray(body.department) || typeof body.department === 'string').toBe(true)
+      expect(typeof body.img === 'string').toBe(true)
+      expect(Array.isArray(body.country) || typeof body.country === 'string').toBe(true)
+      expect(typeof body.creditedTo === 'string').toBe(true)
+      expect(typeof body.alt === 'string').toBe(true)
+ 
+  })
+  test('GET 200: call to Rijks Museum API to get artpiece with invalid id returns a 404 status and an error message',async()=>{
+    await new Promise(resolve => setTimeout(resolve, 2000));  
+    const {body} = await request(app)
+    .get('/api/collections/RijksMuseum/NOTANID')
+    .expect(404)
+   
+    expect(body.message).toBe('Artwork Id does not exist')
+ 
+  })
  
 
 })
