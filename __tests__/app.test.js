@@ -190,11 +190,6 @@ describe('/api/collections/RijksMuseum',()=>{
     
 
   });
-
-
-})
-
-describe('/api/collections/RijksMuseum',()=>{
   test('GET 400: call to Rijks Museum API without a results per page value returns a 400 erro and an error message',async ()=>{
     const {body} = await request(app)
     .get('/api/collections/RijksMuseum?&ps=10&q=""')
@@ -203,10 +198,6 @@ describe('/api/collections/RijksMuseum',()=>{
     
 
   });
-  
-})
-
-describe('/api/collections/RijksMuseum',()=>{
   test('GET 400: call to Rijks Museum API without a result page value returns a 400 erro and an error message',async ()=>{
     const {body} = await request(app)
     .get('/api/collections/RijksMuseum?&p=1&q=""')
@@ -215,10 +206,81 @@ describe('/api/collections/RijksMuseum',()=>{
     
 
   });
+
+  test('GET 400: call to Rijks Museum API with invalid searchTerm returns a status 400 and an error message',async()=>{
+    const {body} = await request(app)
+    .get(`/api/collections/RijksMuseum?&p=1&ps=10&q=""&searchTerm=9999`)
+    .expect(400)
+    expect(body.message).toBe('searchTerm must be a string data type')
+  })
+
  
+
 })
 
 
+
+describe('/api/collections/ArtInstitueChicago',()=>{
+  test('GET 200: call to Chicago Art Institute API returns a 200 staus with an array of objects containing the correct keys and datatypes',async ()=>{
+    const {body:{ArtInstituteOfChicago}} = await request(app)
+    .get('/api/collections/ArtInstitueChicago?page=1&limit=10&q=""')
+    .expect(200)
+    
+    for(let i=0; i<ArtInstituteOfChicago.length;i++){
+      expect(typeof ArtInstituteOfChicago[i].classification === 'string').toBe(true)
+      expect(Array.isArray(ArtInstituteOfChicago[i].medium)).toBe(true)
+      expect(typeof ArtInstituteOfChicago[i].id === 'number').toBe(true)
+      expect(typeof ArtInstituteOfChicago[i].title === 'string').toBe(true)
+      expect(typeof ArtInstituteOfChicago[i].artist === 'string').toBe(true)
+      expect(typeof ArtInstituteOfChicago[i].date === 'number').toBe(true)
+      expect(typeof ArtInstituteOfChicago[i].department === 'string').toBe(true)
+      expect(typeof ArtInstituteOfChicago[i].img === 'string').toBe(true)
+      expect(typeof ArtInstituteOfChicago[i].smallImg === 'string').toBe(true)
+      expect(typeof ArtInstituteOfChicago[i].country === 'string').toBe(true)
+      expect(typeof ArtInstituteOfChicago[i].creditedTo === 'string').toBe(true)
+      expect(typeof ArtInstituteOfChicago[i].alt === 'string').toBe(true)
+      expect(typeof ArtInstituteOfChicago[i].description === 'string').toBe(true)
+    }
+   
+  })
+  test('GET 200: call to Chicago Art Institute API returns a 200 staus with an array of objects containing the correct keys and datatypes',async ()=>{
+    const {body:{ArtInstituteOfChicago}} = await request(app)
+    .get('/api/collections/ArtInstitueChicago?page=1&limit=10&q=""&placeOfOrigin=China')
+    .expect(200)
+    
+    
+     for(let i=0; i<ArtInstituteOfChicago.length;i++){
+    
+      expect(ArtInstituteOfChicago[i].country === 'China').toBe(true)
+     
+    } 
+   
+  })
+
+  
+  test('GET 400: call to Chicago Art Institute API with an invalid page query returns a 400 staus with an error message',async ()=>{
+    const {body} = await request(app)
+    .get('/api/collections/ArtInstitueChicago?page=x&limit=10&q=""&placeOfOrigin=China')
+    .expect(400)
+    expect(body.message).toBe('page must be a number data type')
+   
+  });
+  test('GET 400: call to Chicago Art Institute API with an invalid limit query returns a 400 staus with an error message',async ()=>{
+    const {body} = await request(app)
+    .get('/api/collections/ArtInstitueChicago?page=1&limit=x&q=""&placeOfOrigin=China')
+    .expect(400)
+    expect(body.message).toBe('Number of results (limit) must be a number data type')
+   
+  })
+  test('GET 400: call to Chicago Art Institute API with an invalid query returns a 400 staus with an error message',async ()=>{
+    const {body} = await request(app)
+    .get('/api/collections/ArtInstitueChicago?page=1&limit=10&q=9999&placeOfOrigin=China')
+    .expect(400)
+    expect(body.message).toBe('query must be a string data type')
+   
+  })
+
+})
 
 
 
