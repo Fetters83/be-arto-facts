@@ -1,4 +1,4 @@
-const { getMetArtCollections, getArtInstituteChigagoCollections, getMetArtDepartments, getRijksCollections, getMetPieceById, getRijksArtPieceById } = require('../controllers/getCollections.controllers')
+const { getMetArtCollections, getArtInstituteChigagoCollections, getMetArtDepartments, getRijksCollections, getMetPieceById, getRijksArtPieceById, getArtInstituteChigagoArtPieceById } = require('../controllers/getCollections.controllers')
 
 const collectionsRouter = require('express').Router()
 
@@ -18,6 +18,7 @@ collectionsRouter.get('/RijksMuseum/:id',getRijksArtPieceById)
 //get Art Institute of Chicago Museum Pieces
 
 collectionsRouter.get('/ArtInstitueChicago',getArtInstituteChigagoCollections)
+collectionsRouter.get('/ArtInstitueChicago/:id',getArtInstituteChigagoArtPieceById)
 
 
 module.exports = collectionsRouter
