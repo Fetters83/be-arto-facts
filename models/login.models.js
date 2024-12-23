@@ -24,4 +24,29 @@ const retrieveLogin = async(email, password) =>{
     }
 }
 
-module.exports = {retrieveLogin}
+
+const checkUserInFireStore = async (uid, email) => {
+    try {
+        const firestore = getFirestore(firebaseApp);
+        const userRef = doc(firestore, process.env.USER_COLLECTION_ID, uid);
+
+        // Check if the document exists
+        const userSnapshot = await getDoc(userRef);
+
+        if (!userSnapshot.exists()) {
+            // Add default data for new users
+            await setDoc(userRef, {
+                uid,
+                email,
+                username: "", 
+                publicCollections: [],
+                subscriptions: [],
+                createdAt: new Date().toISOString(),
+            });
+        }
+    } catch (error) {
+        console.error("Error in ensureUserInFirestore:", error.message, error.code);
+    }
+};
+
+module.exports = {retrieveLogin,checkUserInFireStore}

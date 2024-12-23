@@ -2,6 +2,7 @@ const admin = require('firebase-admin');
 const credentials = require('./serviceAccountKey.json');
 const { initializeApp } = require('firebase/app');
 const { getAuth } = require('firebase/auth');
+const { getFirestore } = require("firebase/firestore");
 require('firebase/auth');
 
 const ENV = process.env.NODE_ENV || 'development';
@@ -32,13 +33,14 @@ require('dotenv').config({
         subscriptions_collection_id:process.env.SUBSCRIPTIONS_COLLECTION_ID,
         rijks_api_key:process.env.RIJKS_API_KEY}; 
     
-        const db = admin.firestore();
+        const adminDb = firebaseAdmin.firestore()
 
  
     module.exports = {
         firebaseAdmin,
-        db,
         config,
-        firebaseApp
+        adminDb,
+        firebaseApp,
+        
     };
 
