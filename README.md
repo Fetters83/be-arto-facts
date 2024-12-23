@@ -11,8 +11,8 @@ A web application for art enthusiasts to discover, curate, and share art collect
 - [Environment Variables](#environment-variables)
 - [API Endpoints](#api-endpoints)
 - [Testing](#testing)
-- [Contributing](#contributing)
-- [License](#license)
+
+
 
 ---
 
@@ -113,16 +113,16 @@ A web application for art enthusiasts to discover, curate, and share art collect
 
 Environment Variables
 
-FIREBASE_API_KEY	Your Firebase API Key
-AUTHDOMAIN	Firebase Auth Domain
-PROJECT_ID	Firebase Project ID
-STORAGE_BUCKET	Firebase Storage Bucket
-MESSAGING_SENDER_ID	Firebase Messaging Sender ID
-APP_ID	Firebase App ID
-USER_COLLECTION_ID	Firestore collection name for users
-ART_COLLECTIONS_COLLECTION_ID	Firestore collection name for art collections
-SUBSCRIPTIONS_COLLECTION_ID	Firestore collection name for subscriptions
-RIJKS_API_KEY	API Key for Rijksmuseum API
+- FIREBASE_API_KEY: Your Firebase API Key
+- AUTHDOMAIN: Firebase Auth Domain
+- PROJECT_ID: Firebase Project ID
+- STORAGE_BUCKET: Firebase Storage Bucket
+- MESSAGING_SENDER_ID: Firebase Messaging Sender ID
+- APP_ID: Firebase App ID
+- USER_COLLECTION_ID: Firestore collection name for users
+- ART_COLLECTIONS_COLLECTION_ID: Firestore collection name for art  collections
+- SUBSCRIPTIONS_COLLECTION_ID: Firestore collection name for subscriptions
+- RIJKS_API_KEY: API Key for Rijksmuseum API (signup for an API key at https://data.rijksmuseum.nl/docs/api/)
 
 ## API Endpoints
  Authentication
