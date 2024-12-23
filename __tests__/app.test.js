@@ -1,8 +1,45 @@
 const request = require('supertest')
 const app = require('../app')
+const { adminDb, firebaseAdmin } = require('../firebaseConfig');
 const { retrieveLogin } = require("../models/login.models");
+const { insertNewSignUp } = require('../models/postNewSignUp.models');
+const { getUidByEmail } = require('../utils/getUidByEmail');
+const { insertNewArtCollection, fetchUserCollections, fetchAllPublicCollections, fetchPublicCollectionById, removeCollectionById } = require('../models/artCollections.models');
+const { getUserCollections, deleteCollectionById } = require('../controllers/artCollections.controllers');
+const { addArtworkToCollection, removeArtworkFromCollection } = require('../models/manageCollections.models');
+
 
 jest.setTimeout(10000);
+
+// Function to delete all documents in a Firestore collection
+const clearFirestoreCollection = async (collectionName) => {
+  const collectionRef = adminDb.collection(collectionName);
+  const snapshot = await collectionRef.get();
+  const batch = adminDb.batch();
+
+  snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+
+  await batch.commit();
+};
+
+// Function to delete all users in Firebase Authentication
+const clearAuthenticationUsers = async () => {
+  const listUsersResult = await firebaseAdmin.auth().listUsers();
+  const userIds = listUsersResult.users.map((user) => user.uid);
+
+  const deletePromises = userIds.map((uid) => firebaseAdmin.auth().deleteUser(uid));
+
+  await Promise.all(deletePromises);
+};
+
+// Jest setup to run before all tests
+beforeAll(async () => {
+ /*  console.log('Cleaning up Firestore and Authentication before tests...'); */
+  await clearFirestoreCollection(process.env.USER_COLLECTION_ID); // Remove `users_test` collection
+  await clearFirestoreCollection(process.env.ART_COLLECTIONS_COLLECTION_ID)
+  await clearAuthenticationUsers(); // Remove all authentication users
+/*   console.log('Cleanup complete.'); */
+});
 
 describe('/api',()=>{
     test('GET 200: initial API test',async()=>{
@@ -366,28 +403,343 @@ describe('api/collections/ArtInstitueChicago/:id',()=>{
   })
 })
 
-describe.skip('/api/signup',()=>{
-  test('POST 201: signing up with email and password generates a custom token and authenticates user',async()=>{
-    const {body} = await request(app)
-    .post('/api/signup')
-    .send({email:'wgyves@hotmail.com',password:'Goater83'})
-    .expect(201)
-    expect(body.message).toBe('User successfully created')
+  describe.only('/api/signup',()=>{
+    test('POST 201: signing up with email and password generates a custom token and authenticates user',async()=>{
+      const email1 = "angiebrook1@hotmail.co.uk";
+      const password1= "Ebarin88";
+      const username1 = "Japangie88"
+      const email2 = "wgyves@hotmail.com";
+      const password2= "Goater83";
+      const username2 = "F3tters83"
+      const result1 = await insertNewSignUp(email1,password1,username1)
+      const result2 = await insertNewSignUp(email2,password2,username2)
+      expect(result1).toHaveProperty("token");
+      expect(result2).toHaveProperty("token");
+
+    })
+  })
+
+  describe.only('/api/login',()=>{
+    test('POST 2O1:login with valid email and password successfully creates token',async()=>{
+      const email1 = "angiebrook1@hotmail.co.uk";
+      const password1= "Ebarin88";
+
+      const email2 = "wgyves@hotmail.com";
+      const password2= "Goater83";
+    
+
+      const result1 = await retrieveLogin(email1, password1);
+      const result2 = await retrieveLogin(email2, password2);
+      expect(result1).toHaveProperty("token");
+      expect(result2).toHaveProperty("token");
+    })
+  })
+
+
+describe.only('/api/art-collections',()=>{
+  test('POST 201: User with the correct request body can create a new collection',async()=>{
+    const testUserId1=await getUidByEmail('angiebrook1@hotmail.co.uk')
+    
+      const uid = testUserId1
+      const title='Asia Art Collection'
+      const description ='A collection of the best Asian Art Pieces'
+      const isPublic = true
+    
+    const result = await insertNewArtCollection(uid,title,description,isPublic)
+    expect(result.message).toBe("Art collection created successfully")
+  
+
+  });
+  test('POST 400: Invalid request body to create new collection returns a status of 400 and an errr message',async()=>{
+    const title='Asia Art Collection'
+    const description ='A collection of the best Asian Art Pieces'
+    const isPublic = true
+
+    try {
+      await insertNewArtCollection(title,description,isPublic)
+    } catch (error) {
+      expect(error.status).toBe(400);
+      expect(error.message).toBe('One or more fields are missing or invalid');
+    }
+   
+    })
+  
+  test('GET 200: User can fetch all public collections',async()=>{
+    const testUserId1=await getUidByEmail('angiebrook1@hotmail.co.uk')
+    const result = await fetchAllPublicCollections()
+      expect(result[0].userId).toBe(testUserId1)
+      expect(result[0].title).toBe('Asia Art Collection')
+      expect(result[0].description).toBe('A collection of the best Asian Art Pieces')
+      expect(result[0].isPublic).toBe(true)
+      expect(result[0].artworks).toStrictEqual([])
+      expect(result[0].subscribers).toStrictEqual([])
+      expect(typeof result[0].createdAt).toBe('string')
+      expect(typeof result[0].updatedAt).toBe('string')
 
   })
+ 
+  
 })
 
-describe.only('/api/login',()=>{
-  test('POST 2O1:login with valid email and password successfully creates token',async()=>{
-    const email = "wgyves@hotmail.com";
-    const password = "Goater83";
-
-    const result = await retrieveLogin(email, password);
-    expect(result).toHaveProperty("token");
+describe.only('/api/art-collections/:userId',()=>{
+  test('GET 200: User can fetch all their own created collections',async()=>{
+    const testUserId1=await getUidByEmail('angiebrook1@hotmail.co.uk')
+    const result  = await fetchUserCollections(testUserId1)
+    expect(result[0].userId).toBe(testUserId1)
+    expect(result[0].title).toBe('Asia Art Collection')
+    expect(result[0].description).toBe('A collection of the best Asian Art Pieces')
+    expect(result[0].isPublic).toBe(true)
+    expect(result[0].artworks).toStrictEqual([])
+    expect(result[0].subscribers).toStrictEqual([])
+    expect(typeof result[0].createdAt).toBe('string')
+    expect(typeof result[0].updatedAt).toBe('string')
   })
+
+  test('GET 400:fetching user collections by id with invalid uid returns a 400 error and an error message',async()=>{
+    try {
+      await fetchUserCollections(); // Call without uid
+  } catch (error) {
+      expect(error.status).toBe(400);
+      expect(error.message).toBe('uid is missing or invalid');
+  }
+  })
+
+
 })
 
+describe.only('/api/art-collections/collections/:collectionId',()=>{
+  test('GET 200: User can fetch pubic collection by Id',async()=>{
+
+      const result1 = await fetchAllPublicCollections()
+      const collectionId = result1[0].id
+      const result2 = await fetchPublicCollectionById(collectionId)
+      expect(result2.id).toBe(result1[0].id)
+      expect(result2.artworks).toStrictEqual([])
+      expect(result2.subscribers).toStrictEqual([])
+      expect(result2.userId).toBe(result1[0].userId)
+      expect(result2.title).toBe(result1[0].title)
+      expect(result2.description).toBe(result1[0].description)
+      expect(result2.isPublic).toBe(result1[0].isPublic)
+      expect(result2.createdAt).toBe(result1[0].createdAt)
+      expect(result2.updatedAt).toBe(result1[0].updatedAt)
+      
+  
 
 
+  });
+  test('GET 400:Invalid collection id returns a 400 and an error message',async()=>{
 
+    try {
+    await fetchPublicCollectionById()
+    } catch (error) {
+
+      expect(error.status).toBe(400)
+      expect(error.message).toBe('Invalid collectionId. It must be a non-empty string.')
+      
+    }
+  });
+ 
+})
+
+describe.only('api/manage-collections/collectionId/artwork',()=>{
+  test('POST 200: user can save an artwork to a collection',async()=>{
+    const artwork = { "artwork":{
+      "classification": "Paintings",
+       "medium": "Hanging scroll; ink on silk",
+       "id": "39888",
+       "title": "Wild geese descending to sandbar",
+       "artist": "Unidentified artist",
+       "date": "1533",
+       "department": "Asian Art",
+       "img": "https://images.metmuseum.org/CRDImages/as/original/DT6930.jpg",
+       "smallImg": "https://images.metmuseum.org/CRDImages/as/web-large/DT6930.jpg",
+       "country": "Unknown",
+       "creditedTo": "Purchase, Harris Brisbane Dick Fund, John M. Crawford Jr. Bequest, and The Vincent Astor Foundation Gift, 1992",
+       "alt": "Hanging scroll"
+   }}
+   const testUserId1=await getUidByEmail('angiebrook1@hotmail.co.uk')
+   const result1 = await fetchAllPublicCollections()
+   const collectionId = result1[0].id
+
+  const result = await addArtworkToCollection(collectionId,artwork,testUserId1)
+  expect(result.message).toBe("Artwork added successfully")
+
+  });
+  test('POST 400; invalid artwork obj returns 400 status and message',async()=>{
+   const testUserId1=await getUidByEmail('angiebrook1@hotmail.co.uk')
+   const result1 = await fetchAllPublicCollections()
+   const collectionId = result1[0].id 
+
+   try {
+    await addArtworkToCollection(collectionId,"",testUserId1)
+   } catch (error) {
+    expect(error.status).toBe(400)
+    expect(error.message).toBe('Invalid artwork object. It must not be empty')
+    
+   }
+  });
+  test('POST 400; invalid collection id returns 400 status and message',async()=>{
+    const artwork = { "artwork":{
+      "classification": "Paintings",
+       "medium": "Hanging scroll; ink on silk",
+       "id": "39888",
+       "title": "Wild geese descending to sandbar",
+       "artist": "Unidentified artist",
+       "date": "1533",
+       "department": "Asian Art",
+       "img": "https://images.metmuseum.org/CRDImages/as/original/DT6930.jpg",
+       "smallImg": "https://images.metmuseum.org/CRDImages/as/web-large/DT6930.jpg",
+       "country": "Unknown",
+       "creditedTo": "Purchase, Harris Brisbane Dick Fund, John M. Crawford Jr. Bequest, and The Vincent Astor Foundation Gift, 1992",
+       "alt": "Hanging scroll"
+   }}
+   const testUserId1=await getUidByEmail('angiebrook1@hotmail.co.uk')
+
+   try {
+    await addArtworkToCollection("",artwork,testUserId1)
+   } catch (error) {
+    expect(error.status).toBe(400)
+    expect(error.message).toBe('Invalid collectionId. It must be a non-empty string.')
+    
+   }
+  });
+  test('POST 400; invalid userId returns 400 status and message',async()=>{
+    const artwork = { "artwork":{
+      "classification": "Paintings",
+       "medium": "Hanging scroll; ink on silk",
+       "id": "39888",
+       "title": "Wild geese descending to sandbar",
+       "artist": "Unidentified artist",
+       "date": "1533",
+       "department": "Asian Art",
+       "img": "https://images.metmuseum.org/CRDImages/as/original/DT6930.jpg",
+       "smallImg": "https://images.metmuseum.org/CRDImages/as/web-large/DT6930.jpg",
+       "country": "Unknown",
+       "creditedTo": "Purchase, Harris Brisbane Dick Fund, John M. Crawford Jr. Bequest, and The Vincent Astor Foundation Gift, 1992",
+       "alt": "Hanging scroll"
+   }}
+   const result1 = await fetchAllPublicCollections()
+   const collectionId = result1[0].id 
+
+   try {
+    await addArtworkToCollection(collectionId,artwork,"")
+   } catch (error) {
+    expect(error.status).toBe(400)
+    expect(error.message).toBe('uid is missing or invalid')
+    
+   }
+  });
+
+  test('DELETE 403: user attempts to remove an artwork from another users collection returns a 403 status and an error message',async()=>{
+    const testUserId1=await getUidByEmail('angiebrook1@hotmail.co.uk')
+    const testUserId2=await getUidByEmail('wgyves@hotmail.com')
+    const result = await fetchUserCollections(testUserId1)
+    const collectionId = result[0].id
+     const id = "39888"
+    try {
+     await removeArtworkFromCollection(collectionId,id,testUserId2)
+    } catch (error) {
+      expect(error.status).toBe(403)
+      expect(error.message).toBe("You do not have permission to delete from this collection")
+    }
+   
+   
+  });
+
+    test('DELETE 200: User can remove artwork from collection',async()=>{
+    const testUserId1=await getUidByEmail('angiebrook1@hotmail.co.uk')
+    const result1 = await fetchUserCollections(testUserId1)
+    const collectionId = result1[0].id
+    const id = "39888"
+    const result2 = await removeArtworkFromCollection(collectionId,id,testUserId1)
+    expect(result2.message).toBe('Artwork removed successfully')
+
+  });
+
+  test('DELETE 400:Invalid collection id returns a 400 status and an error message',async()=>{
+    const testUserId1=await getUidByEmail('angiebrook1@hotmail.co.uk')
+    const id = "39888"
+    try {
+     await removeArtworkFromCollection("",id,testUserId1)
+    } catch (error) {
+      expect(error.status).toBe(400)
+      expect(error.message).toBe('Invalid collectionId. It must be a non-empty string.')
+    }
+   
+   
+  });
+  test('DELETE 400:Invalid artwork id returns a 400 status and an error message',async()=>{
+    const testUserId1=await getUidByEmail('angiebrook1@hotmail.co.uk')
+    const result = await fetchUserCollections(testUserId1)
+    const collectionId = result[0].id
+    try {
+     await removeArtworkFromCollection(collectionId,"",testUserId1)
+    } catch (error) {
+      expect(error.status).toBe(400)
+      expect(error.message).toBe('Invalid artwork id')
+    }
+   
+   
+  });
+  test('DELETE 400: missing userId returns a 400 status and an error message',async()=>{
+    const testUserId1=await getUidByEmail('angiebrook1@hotmail.co.uk')
+    const result = await fetchUserCollections(testUserId1)
+    const collectionId = result[0].id
+     const id = "39888"
+    try {
+     await removeArtworkFromCollection(collectionId,id,"")
+    } catch (error) {
+      expect(error.status).toBe(400)
+      expect(error.message).toBe('uid is missing or invalid')
+    }
+   
+   
+  });
+
+
+  
+  
+  
+})
+
+/* describe.only('/api/art-collections/collections/:collectionId',()=>{
+ 
+  test('DELETE 403: when user who does not own collection attempt to delete collection a 403 status is returned with an error message',async()=>{
+    
+    try {
+      const testUserId1=await getUidByEmail('wgyves@hotmail.com')
+      const result1 = await fetchAllPublicCollections()
+      const collectionId = result1[0].id
+      await removeCollectionById(collectionId,testUserId1)
+     
+    } catch (error) {
+   
+      expect(error.status).toBe(403) 
+      expect(error.message).toBe("You do not have permission to delete this collection")
+    }
+   
+  });
+  test('DELETE 200: User can delete pubic collection by Id',async()=>{
+    const testUserId1=await getUidByEmail('angiebrook1@hotmail.co.uk')
+    const result1 = await fetchAllPublicCollections()
+    const collectionId = result1[0].id
+    const result  = await removeCollectionById(collectionId,testUserId1)
+    expect(result.message).toBe("Art collection deleted successfully")
+
+  });
+ 
+  test('DELETE 404: invalid collection id returns a 404 status and an error message',async()=>{
+    
+    try {
+      const testUserId1=await getUidByEmail('angiebrook1@hotmail.co.uk')
+      await removeCollectionById('',testUserId1)
+     
+    } catch (error) {
+      expect(error.status).toBe(400)
+      expect(error.message).toBe('Invalid collectionId. It must be a non-empty string.')
+    }
+   
+  });
+  
+})  */
 

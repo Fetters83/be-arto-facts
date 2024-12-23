@@ -1,4 +1,4 @@
-const { retrieveLogin } = require("../models/login.models")
+const { retrieveLogin, checkUserInFireStore } = require("../models/login.models")
 
 const postAuthentication = async (req,res,next)=>{
 
@@ -7,7 +7,14 @@ const postAuthentication = async (req,res,next)=>{
     try {
 
         const result = retrieveLogin(email,password)
-        res.status(201).send(result)
+        if (result.error) {
+            res.status(400).send(result);
+        } else {
+          
+            await checkUserInFireStore(result.uid, email);
+
+            res.status(200).send(result);
+        }
         
     } catch (error) {
         next(error)
