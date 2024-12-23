@@ -130,82 +130,73 @@ const numbersRegex = /^[0-9]*$/
                       //the art work obeject will be located in the  object getArtPiece under the property data - set artPiece to this value
                       const artPiece = getArtPiece.data;
 
-                      //Push a new object into the artCollection array  - the key value pairs of artPiece are added into the pushed object 
-                      artCollection.push({
-                        classification:artPiece.classification,
-                        medium:artPiece.medium,
-                        id:artPiece.objectID,  
-                        title: artPiece.title || 'Unknown',
-                        artist: artPiece.artistDisplayName || 'Unknown Artist',
-                        date: artPiece.objectEndDate || artPiece.objectDate,
-                        department: artPiece.department,
-                        img:artPiece.primaryImage,
-                        smallImg: artPiece.primaryImageSmall,
-                        country: artPiece.country || 'Unknown',
-                        creditedTo: artPiece.creditLine || 'Credited to unknown',
-                        alt: artPiece.objectName || 'Unknown Object Type',
-                      });
-                      
-                 //Catch any errors with the try 2 - retrieving indivdual artworks   
+                      if (artPiece.primaryImage && artPiece.primaryImageSmall) {
+                        artCollection.push({
+                          classification: artPiece.classification,
+                          medium: artPiece.medium,
+                          id: artPiece.objectID,
+                          title: artPiece.title || 'Unknown',
+                          artist: artPiece.artistDisplayName || 'Unknown Artist',
+                          date: artPiece.objectEndDate || artPiece.objectDate,
+                          department: artPiece.department,
+                          img: artPiece.primaryImage,
+                          smallImg: artPiece.primaryImageSmall,
+                          country: artPiece.country || 'Unknown',
+                          creditedTo: artPiece.creditLine || 'Credited to unknown',
+                          alt: artPiece.objectName || 'Unknown Object Type',
+                        });
+                      }
+                    } catch (error) {
+                      console.error(`Error fetching object ID ${objectId}:`, error.message);
+                      // Skip this object and continue to the next
+                    }
+                    currentIndex++;
+                  }
+              
+                  return artCollection;
                 } catch (error) {
-                    console.error(`Error fetching object ID ${objectId}:`, error.message);
-                    throw error
-                  
+                  if (error) throw error;
+              
+                  throw { status: error.status, error: error.message || 'An error occurred', artCollection: [] };
                 }
-                //Increase the currentIndex after iteration through objectIDs
-                currentIndex ++;
-
-        }//While loop end
-        //Once loop ahs finished - return the artCollection array for the front end to consume
-        return(artCollection) 
-        
-       //Catch any errors with 1. Retrieve all valid object Id numbers available to use
-    } catch (error) {
-      
-           
-          if(error) throw error
-
-          throw { status:error.status,error: error.message || 'An error occurred', artCollection: [] };
-    }
-
-  };
+              };
   
    
-const fetchMetArtPieceById = async(id)=>{
-  if(!id) throw {status:404,message:'Artwork Id must be provided'}
+  const fetchMetArtPieceById = async(id)=>{
+    if(!id) throw {status:404,message:'Artwork Id must be provided'}
 
 
-  try {
-    const getArtPiece = await axios(
-      `https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`
-    );
+    try {
+      const getArtPiece = await axios(
+        `https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`
+      );
 
-    if(!getArtPiece) throw{status:404,message:'Artwork id does not exist'}
-    const artPiece = getArtPiece.data
-    
+      if(!getArtPiece) throw{status:404,message:'Artwork id does not exist'}
+      const artPiece = getArtPiece.data
+      
 
 
-    
-    return {
-      classification:artPiece.classification,
-      medium:artPiece.medium,
-      id:artPiece.objectID,  
-      title: artPiece.title || 'Unknown',
-      artist: artPiece.artistDisplayName || 'Unknown Artist',
-      date: artPiece.objectEndDate || artPiece.objectDate,
-      department: artPiece.department,
-      img:artPiece.primaryImage,
-      smallImg: artPiece.primaryImageSmall,
-      country: artPiece.country || 'Unknown',
-      creditedTo: artPiece.creditLine || 'Credited to unknown',
-      alt: artPiece.objectName || 'Unknown Object Type',
+      
+      return {
+        classification:artPiece.classification,
+        medium:artPiece.medium,
+        id:artPiece.objectID,  
+        title: artPiece.title || 'Unknown',
+        artist: artPiece.artistDisplayName || 'Unknown Artist',
+        date: artPiece.objectEndDate || artPiece.objectDate,
+        department: artPiece.department,
+        img:artPiece.primaryImage,
+        smallImg: artPiece.primaryImageSmall,
+        country: artPiece.country || 'Unknown',
+        creditedTo: artPiece.creditLine || 'Credited to unknown',
+        alt: artPiece.objectName || 'Unknown Object Type',
+      }
+    } catch (error) {
+
+      throw error
+      
     }
-  } catch (error) {
-
-    throw error
-    
   }
-}
 
 const fetchRijksCollections = async (p, ps,type,searchTerm,sortQuery,involvedMaker)=>{
   
