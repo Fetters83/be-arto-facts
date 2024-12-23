@@ -37,7 +37,7 @@ const insertNewArtCollection = async (uid, title, description, isPublic) => {
 
         return { message: "Art collection created successfully", collectionId};
     } catch (error) {
-        console.error("Error creating art collection:", error.message);
+    
         return { error: error.message };
     }
 }
@@ -88,7 +88,7 @@ const fetchAllPublicCollections = async()=>{
 
         return publicCollections;
     } catch (error) {
-        console.error("Error fetching public collections:", error.message);
+     
         return { error: error.message };
     }
 }
@@ -174,7 +174,7 @@ const removeCollectionById = async(collectionId,userId)=>{
 
         return { message: "Art collection deleted successfully", collectionId };
     } catch (error) {
-        console.error("Error deleting art collection:", error.message);
+    
         throw error;
     }
 

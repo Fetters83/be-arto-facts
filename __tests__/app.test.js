@@ -7,6 +7,7 @@ const { getUidByEmail } = require('../utils/getUidByEmail');
 const { insertNewArtCollection, fetchUserCollections, fetchAllPublicCollections, fetchPublicCollectionById, removeCollectionById } = require('../models/artCollections.models');
 const { getUserCollections, deleteCollectionById } = require('../controllers/artCollections.controllers');
 const { addArtworkToCollection, removeArtworkFromCollection } = require('../models/manageCollections.models');
+const { createNewSubscription, removeSubscription, fetchSubscriptions } = require('../models/subscriptions.models');
 
 
 jest.setTimeout(10000);
@@ -403,7 +404,7 @@ describe('api/collections/ArtInstitueChicago/:id',()=>{
   })
 })
 
-  describe.only('/api/signup',()=>{
+  describe('/api/signup',()=>{
     test('POST 201: signing up with email and password generates a custom token and authenticates user',async()=>{
       const email1 = "angiebrook1@hotmail.co.uk";
       const password1= "Ebarin88";
@@ -419,7 +420,7 @@ describe('api/collections/ArtInstitueChicago/:id',()=>{
     })
   })
 
-  describe.only('/api/login',()=>{
+  describe('/api/login',()=>{
     test('POST 2O1:login with valid email and password successfully creates token',async()=>{
       const email1 = "angiebrook1@hotmail.co.uk";
       const password1= "Ebarin88";
@@ -436,7 +437,7 @@ describe('api/collections/ArtInstitueChicago/:id',()=>{
   })
 
 
-describe.only('/api/art-collections',()=>{
+describe('/api/art-collections',()=>{
   test('POST 201: User with the correct request body can create a new collection',async()=>{
     const testUserId1=await getUidByEmail('angiebrook1@hotmail.co.uk')
     
@@ -481,7 +482,7 @@ describe.only('/api/art-collections',()=>{
   
 })
 
-describe.only('/api/art-collections/:userId',()=>{
+describe('/api/art-collections/:userId',()=>{
   test('GET 200: User can fetch all their own created collections',async()=>{
     const testUserId1=await getUidByEmail('angiebrook1@hotmail.co.uk')
     const result  = await fetchUserCollections(testUserId1)
@@ -507,7 +508,7 @@ describe.only('/api/art-collections/:userId',()=>{
 
 })
 
-describe.only('/api/art-collections/collections/:collectionId',()=>{
+describe('/api/art-collections/collections/:collectionId',()=>{
   test('GET 200: User can fetch pubic collection by Id',async()=>{
 
       const result1 = await fetchAllPublicCollections()
@@ -541,7 +542,7 @@ describe.only('/api/art-collections/collections/:collectionId',()=>{
  
 })
 
-describe.only('api/manage-collections/collectionId/artwork',()=>{
+describe('api/manage-collections/collectionId/artwork',()=>{
   test('POST 200: user can save an artwork to a collection',async()=>{
     const artwork = { "artwork":{
       "classification": "Paintings",
@@ -696,13 +697,247 @@ describe.only('api/manage-collections/collectionId/artwork',()=>{
    
   });
 
-
-  
-  
-  
 })
 
-/* describe.only('/api/art-collections/collections/:collectionId',()=>{
+
+describe('api/subscriptions',()=>{
+  test('POST 200: user can subscribe to public collection',async()=>{
+
+    const testUserId1=await getUidByEmail('angiebrook1@hotmail.co.uk')
+    const testUserId2=await getUidByEmail('wgyves@hotmail.com')
+    
+      const uid = testUserId2
+      const title='Manchester Collection'
+      const description ='A collection of the best Mancunion Pieces'
+      const isPublic = true
+      const artwork = { "artwork":{
+        "classification": "Paintings",
+         "medium": "Hanging scroll; ink on silk",
+         "id": "39888",
+         "title": "Wild geese descending to sandbar",
+         "artist": "Unidentified artist",
+         "date": "1533",
+         "department": "Asian Art",
+         "img": "https://images.metmuseum.org/CRDImages/as/original/DT6930.jpg",
+         "smallImg": "https://images.metmuseum.org/CRDImages/as/web-large/DT6930.jpg",
+         "country": "Unknown",
+         "creditedTo": "Purchase, Harris Brisbane Dick Fund, John M. Crawford Jr. Bequest, and The Vincent Astor Foundation Gift, 1992",
+         "alt": "Hanging scroll"
+     }}
+
+      try {
+         //test user 2 creates a public collection
+        await insertNewArtCollection(uid,title,description,isPublic)
+        //test user 2 adds art to a collection
+        const result1  = await fetchUserCollections(testUserId2)
+        const collectionId = result1[0].id
+        await addArtworkToCollection(collectionId,artwork,testUserId2)
+        //test user 1 subscribes to test user 2 collection
+        const result2 = await createNewSubscription(collectionId,testUserId1)
+        expect(result2.message).toBe("Subscription created successfully")
+
+      } catch (error) {
+        console.log(error)
+      }
+  })
+
+  test('POST 403: user can subscribing to private collection returns a 403 status and an error message',async()=>{
+
+    const testUserId1=await getUidByEmail('angiebrook1@hotmail.co.uk')
+    const testUserId2=await getUidByEmail('wgyves@hotmail.com')
+    
+      const uid = testUserId2
+      const title='Manchester Collection'
+      const description ='A collection of the best Mancunion Pieces'
+      const isPublic = false
+      const artwork = { "artwork":{
+        "classification": "Paintings",
+         "medium": "Scroll",
+         "id": "39889",
+         "title": "Manchester Skyline",
+         "artist": "Unidentified artist",
+         "date": "1533",
+         "department": "Asian Art",
+         "img": "https://images.metmuseum.org/CRDImages/as/original/DT6930.jpg",
+         "smallImg": "https://images.metmuseum.org/CRDImages/as/web-large/DT6930.jpg",
+         "country": "Unknown",
+         "creditedTo": "Purchase, Harris Brisbane Dick Fund, John M. Crawford Jr. Bequest, and The Vincent Astor Foundation Gift, 1992",
+         "alt": "Hanging scroll"
+     }}
+
+      try {
+         //test user 2 creates a private collection
+        const collectionRef = await insertNewArtCollection(uid,title,description,isPublic)
+        
+        //test user 2 adds art to a collection
+        const collectionId = collectionRef.collectionId
+       
+        await addArtworkToCollection(collectionId,artwork,testUserId2)
+        //test user 1 attempts to subscribe to test user 2 private collection
+        await createNewSubscription(collectionId,testUserId1)
+       
+
+      } catch (error) {
+        expect(error.status).toBe(403)
+        expect(error.message).toBe("Collection is not public and can't be subscribed to")
+
+  }});
+  test('POST 400; invalid collection id returns a 400 status and an error message',async()=>{
+    const testUserId1=await getUidByEmail('angiebrook1@hotmail.co.uk')
+    
+    
+      const uid = testUserId1
+      try {
+          
+        await createNewSubscription("",uid)
+        } catch (error) {
+          expect(error.status).toBe(400)
+          expect(error.message).toBe("Invalid collectionId. It must be a non-empty string.")
+        }
+  }); 
+  test('POST 400; invalid collection id returns a 400 status and an error message',async()=>{
+    const testUserId2=await getUidByEmail('wgyves@hotmail.com')
+    const result1  = await fetchUserCollections(testUserId2)
+     const collectionId = result1[0].id
+      try {
+          
+        await createNewSubscription(collectionId,"")
+        } catch (error) {
+          expect(error.status).toBe(400)
+          expect(error.message).toBe('uid is missing or invalid')
+        }
+  });
+  test('DELETE 200: User can successfully remove a subscription', async () => {
+    const testUserId1 = await getUidByEmail('angiebrook1@hotmail.co.uk');
+    const testUserId2 = await getUidByEmail('wgyves@hotmail.com');
+
+    const uid = testUserId1;
+    const title = 'Manchester Collection';
+    const description = 'A collection of the best Mancunion Pieces';
+    const isPublic = true;
+
+    // Test user 2 creates a public collection
+    const collectionRef = await insertNewArtCollection(testUserId2, title, description, isPublic);
+    const collectionId = collectionRef.collectionId;
+
+    // Test user 1 subscribes to the collection
+    await createNewSubscription(collectionId, testUserId1);
+
+    // Test user 1 removes the subscription
+    const result = await removeSubscription(collectionId, testUserId1);
+
+    expect(result).toEqual({
+        message: 'Subscription removed successfully',
+        collectionId,
+    });
+});
+
+test('DELETE 400: Removing subscription with invalid collection ID returns 400 error', async () => {
+    const testUserId1 = await getUidByEmail('angiebrook1@hotmail.co.uk');
+
+    try {
+        await removeSubscription('', testUserId1); 
+    } catch (error) {
+        expect(error.status).toBe(400);
+        expect(error.message).toBe('Invalid collectionId. It must be a non-empty string.');
+    }
+});
+
+test('DELETE 400: Removing subscription with invalid UID returns 400 error', async () => {
+    const testUserId2 = await getUidByEmail('wgyves@hotmail.com');
+    const title = 'Test Collection';
+    const description = 'Description of test collection';
+    const isPublic = true;
+
+    // Test user 2 creates a public collection
+    const collectionRef = await insertNewArtCollection(testUserId2, title, description, isPublic);
+    const collectionId = collectionRef.collectionId;
+
+    try {
+        await removeSubscription(collectionId, ''); 
+    } catch (error) {
+        expect(error.status).toBe(400);
+        expect(error.message).toBe('uid is missing or invalid');
+    }
+});
+
+test('DELETE 404: Removing subscription for non-existent collection returns 404 error', async () => {
+    const testUserId1 = await getUidByEmail('angiebrook1@hotmail.co.uk');
+    const nonExistentCollectionId = 'non-existent-collection-id';
+
+    try {
+        await removeSubscription(nonExistentCollectionId, testUserId1);
+    } catch (error) {
+        expect(error.status).toBe(404);
+        expect(error.message).toBe('Art collection not found');
+    }
+});
+
+test('DELETE 404: Removing subscription for non-existent user returns 404 error', async () => {
+    const testUserId2 = await getUidByEmail('wgyves@hotmail.com');
+    const title = 'Test Collection';
+    const description = 'Description of test collection';
+    const isPublic = true;
+
+    // Test user 2 creates a public collection
+    const collectionRef = await insertNewArtCollection(testUserId2, title, description, isPublic);
+    const collectionId = collectionRef.collectionId;
+
+    try {
+        await removeSubscription(collectionId, 'non-existent-user-id');
+    } catch (error) {
+        expect(error.status).toBe(404);
+        expect(error.message).toBe('User not found');
+    }
+});
+
+test('DELETE 404: Removing subscription that does not exist in user subscriptions returns 404 error', async () => {
+    const testUserId1 = await getUidByEmail('angiebrook1@hotmail.co.uk');
+    const testUserId2 = await getUidByEmail('wgyves@hotmail.com');
+    const title = 'Test Collection';
+    const description = 'Description of test collection';
+    const isPublic = true;
+
+    // Test user 2 creates a public collection
+    const collectionRef = await insertNewArtCollection(testUserId2, title, description, isPublic);
+    const collectionId = collectionRef.collectionId;
+
+    try {
+        await removeSubscription(collectionId, testUserId1); 
+    } catch (error) {
+        expect(error.status).toBe(404);
+        expect(error.message).toBe('Collection does not exist in subscriptions');
+    }
+});
+
+ describe('/api/subscriptions',()=>{
+  test('GET 200: user can retrive all collections they are subscribed to',async()=>{
+    const testUserId1 = await getUidByEmail('angiebrook1@hotmail.co.uk');
+    const result = await fetchSubscriptions(testUserId1)
+    expect(typeof result.collections[0].id === 'string').toBe(true)
+    expect(Array.isArray(result.collections[0].subscribers)).toBe(true)
+    expect(typeof result.collections[0].userId === 'string').toBe(true)
+    expect(typeof result.collections[0].title === 'string').toBe(true)
+    expect(typeof result.collections[0].description === 'string').toBe(true)
+    expect(typeof result.collections[0].isPublic === 'boolean').toBe(true)
+    expect(typeof result.collections[0].createdAt === 'string').toBe(true)
+    expect(Array.isArray(result.collections[0].artworks)).toBe(true)
+    expect(typeof result.collections[0].updatedAt === 'string').toBe(true)
+  });
+  test('GET 400: invalid user id returns a 400 status and an error message',async()=>{
+    try {
+      await fetchSubscriptions("")
+    } catch (error) {
+      expect(error.status).toBe(400)
+      expect(error.message).toBe("Invalid uid. It must be a non-empty string.")
+      
+    }
+  })
+
+ })
+
+})
+describe('/api/art-collections/collections/:collectionId',()=>{
  
   test('DELETE 403: when user who does not own collection attempt to delete collection a 403 status is returned with an error message',async()=>{
     
@@ -721,7 +956,7 @@ describe.only('api/manage-collections/collectionId/artwork',()=>{
   });
   test('DELETE 200: User can delete pubic collection by Id',async()=>{
     const testUserId1=await getUidByEmail('angiebrook1@hotmail.co.uk')
-    const result1 = await fetchAllPublicCollections()
+    const result1 = await fetchUserCollections(testUserId1)
     const collectionId = result1[0].id
     const result  = await removeCollectionById(collectionId,testUserId1)
     expect(result.message).toBe("Art collection deleted successfully")
@@ -741,5 +976,5 @@ describe.only('api/manage-collections/collectionId/artwork',()=>{
    
   });
   
-})  */
+})  
 

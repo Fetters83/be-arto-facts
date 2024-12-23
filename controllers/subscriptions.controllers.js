@@ -1,4 +1,4 @@
-const { createNewSubscription, removeSubscription } = require("../models/subscriptions.models")
+const { createNewSubscription, removeSubscription, fetchSubscriptions } = require("../models/subscriptions.models")
 
 const postNewSubscription = async(req,res,next)=>{
 
@@ -32,4 +32,16 @@ const deleteSubscription = async(req,res,next)=>{
 
 }
 
-module.exports = {postNewSubscription,deleteSubscription}
+const getSubscriptions = async (req,res,next)=>{
+
+    const {uid} = req.params
+
+    try {
+        const result  = await fetchSubscriptions(uid)
+        res.status(200).send(result)
+    } catch (error) {
+        next(error)
+    }
+}
+
+module.exports = {postNewSubscription,deleteSubscription,getSubscriptions}

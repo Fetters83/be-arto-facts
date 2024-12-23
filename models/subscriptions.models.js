@@ -5,7 +5,12 @@ const admin = require('firebase-admin');
 const createNewSubscription = async (collectionId,uid) =>{
 
     if (!collectionId) {
-        throw new Error("Invalid collectionId. It must be a non-empty string.");
+        throw ({status:400,message:"Invalid collectionId. It must be a non-empty string."});
+    }
+
+    if (
+        !uid || typeof uid !== 'string' ) {
+        throw { status: 400, message: 'uid is missing or invalid' };
     }
 
     try {
@@ -30,9 +35,6 @@ const createNewSubscription = async (collectionId,uid) =>{
         }
         
     } catch (error) {
-        console.error("Error creating subscription:", error.message);
-      
-        
        throw error
        
     }
@@ -42,8 +44,14 @@ const createNewSubscription = async (collectionId,uid) =>{
 const removeSubscription = async(collectionId,uid)=>{
     
     if (!collectionId) {
-        throw new Error("Invalid collectionId. It must be a non-empty string.");
+        throw ({status:400,message:"Invalid collectionId. It must be a non-empty string."});
     }
+
+    if (
+        !uid || typeof uid !== 'string' ) {
+        throw { status: 400, message: 'uid is missing or invalid' };
+    }
+
 
     try {
 
@@ -80,4 +88,44 @@ const removeSubscription = async(collectionId,uid)=>{
 
 }
 
-module.exports = {createNewSubscription,removeSubscription}
+const fetchSubscriptions = async(uid)=>{
+
+    if (!uid || typeof uid !== 'string') {
+        throw { status: 400, message: "Invalid uid. It must be a non-empty string." };
+    }
+
+    try {
+        
+        const userRef = adminDb.collection(process.env.USER_COLLECTION_ID).doc(uid);
+        const userSnapshot = await userRef.get();
+
+        if (!userSnapshot.exists) {
+            throw { status: 404, message: "User not found" };
+        }
+
+        const userData = userSnapshot.data();
+
+      
+        const { subscriptions } = userData;
+        if (!subscriptions || subscriptions.length === 0) {
+            return { message: "No subscriptions found.", collections: [] };
+        }
+
+       
+        const collectionRefs = subscriptions.map((id) =>
+            adminDb.collection(process.env.ART_COLLECTIONS_COLLECTION_ID).doc(id).get()
+        );
+        const collectionSnapshots = await Promise.all(collectionRefs);
+
+        
+        const collections = collectionSnapshots
+            .filter((snapshot) => snapshot.exists)
+            .map((snapshot) => ({ id: snapshot.id, ...snapshot.data() }));
+
+        return { message: "Subscriptions fetched successfully.", collections };
+    } catch (error) {
+         throw error;
+    }
+}
+
+module.exports = {createNewSubscription,removeSubscription,fetchSubscriptions}
