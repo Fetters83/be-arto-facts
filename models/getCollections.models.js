@@ -443,7 +443,10 @@ const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,arti
                     const artworkImgDetails = artworkData.data.config
                 
                  //Push into the artCollection array an new object containing the artwork data from the artworkDetails variable
-                 //Images use a data from artworkImgDetails and artworkDetails       
+                 //Images use a data from artworkImgDetails and artworkDetails
+                 if(artworkDetails.img && artworkDetails.smallImg){
+                  
+                 }       
                     artCollection.push({
                         classification:artworkDetails.artwork_type_title,
                         medium:artworkDetails.term_titles,
