@@ -111,8 +111,7 @@ const numbersRegex = /^[0-9]*$/
         }
        //Set the object IDs array to the result of getAvailableIDs (located in the key data, then objectIDs)      
        objectIDs=getAvailableIDs.data.objectIDs;
-       //Add Number of results to artCollection array
-       artCollection.push({numberOfIds:objectIDs.length})
+     
         
        //Return error if offset number is higher than the number of objects available
        if(parseInt(offset)>objectIDs.length) throw{status:404,message:'Offset or Page start exceeds the number of available artworks'}
@@ -154,8 +153,9 @@ const numbersRegex = /^[0-9]*$/
                     }
                     currentIndex++;
                   }
-              
-                  return artCollection;
+                //Add Number of results to artCollection array
+       
+                  return {numberOfIds:objectIDs.length,artCollection};
                 } catch (error) {
                   if (error) throw error;
               
