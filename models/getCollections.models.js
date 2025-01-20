@@ -42,8 +42,8 @@ if (offset === undefined) {
 
 
 
-if (searchTerm === undefined) {
-  throw { status: 404, message: "Search term key must be present" };
+if (searchTerm === undefined || searchTerm === null || searchTerm === "") {
+  searchTerm = "";
 }
 
 
