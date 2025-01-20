@@ -26,9 +26,69 @@ const fetchMetArtDepartments = async ()=>{
   }
 }
 
-const fetchMetArtCollections = async (limit,offset,departmentId,type,searchTerm) => {
+const fetchMetArtCollections = async (limit,offset,departmentId,type,searchTerm,artistOrCulture,title,isHighlight,dateBegin,dateEnd,sortBy) => {
 
 const numbersRegex = /^[0-9]*$/
+
+//Ensure at least the limit, offset, and searchTerm keys are present
+
+if (limit === undefined) {
+  throw { status: 404, message: "Search term key must be present" };
+}
+
+if (offset === undefined) {
+  throw { status: 404, message: "Search term key must be present" };
+}
+
+
+
+if (searchTerm === undefined) {
+  throw { status: 404, message: "Search term key must be present" };
+}
+
+
+if((dateBegin && !dateEnd)||(dateEnd && !dateBegin)) {
+  throw { status: 404, message: "Era searches must have both dateBegin and dateEnd values" };
+
+}
+
+if(artistOrCulture && (artistOrCulture !== 'true' && artistOrCulture !== 'false')){
+  throw { status: 400, message: 'artistOrCulture value must be a boolean data type' };
+}
+
+if(title && (title !== 'true' && title!== 'false')){
+  throw { status: 400, message: 'title value must be a boolean data type' };
+}
+
+if(isHighlight && (isHighlight !== 'true' && isHighlight!== 'false')){
+  throw { status: 400, message: 'isHighlight value must be a boolean data type' };
+}
+
+if (dateBegin && isNaN(parseInt(dateBegin))){
+  throw  {status :400, message: 'dateBegin must be an integer value'}
+}
+
+if (dateEnd && isNaN(parseInt(dateEnd))){
+  throw  {status :400, message: 'dateEnd must be an integer value'}
+}
+
+
+
+const validSortValues = [
+  'titleASC',
+  'titleDESC',
+  'dateASC',
+  'dateDESC',
+  'artistASC',
+  'artistDESC'
+];
+
+if (sortBy && !validSortValues.includes(sortBy)) {
+  throw { status: 404, message: "Invalid sortBy value" };
+}
+
+
+
 
    //Results per page
     const resultsPerPage = parseInt(limit);
@@ -39,6 +99,30 @@ const numbersRegex = /^[0-9]*$/
     //offset will be a string, so convert it to an integer, this is the start point of the iteration through the  objects array
     let currentIndex = parseInt(offset);
 
+
+    const isArtistOrCulture = artistOrCulture !== undefined && artistOrCulture !== null
+    ? artistOrCulture === 'true'
+    : undefined;
+
+  const isTitle = title !== undefined && title !== null
+    ? title === 'true'
+    : undefined;
+  
+ 
+   
+  const isHighlightSelected = isHighlight !== undefined && isHighlight !== null
+    ? isHighlight === 'true'
+    : undefined;
+
+   
+
+   const intDateBegin = dateBegin !== undefined && dateBegin !== null
+   ? dateBegin = parseInt(dateBegin) : undefined
+
+
+   const intDateEnd = dateEnd !== undefined && dateEnd !== null
+   ? dateEnd = parseInt(dateEnd) : undefined
+  
   //ensure request query department Id exists
     try {
       
@@ -46,18 +130,21 @@ const numbersRegex = /^[0-9]*$/
         throw { status: 400, message: 'Department ID must be a number data type' };
       }
 
-      const departmentIds = await fetchMetArtDepartments()
-      const {departments} = departmentIds
-      const idExists = departments.filter((department)=>department.departmentId===parseInt(departmentId))
-      
-      if(idExists.length===0) throw{status:404,message:'DepartmentId does not exist'}
+      if(departmentId){
+        const departmentIds = await fetchMetArtDepartments()
+        const {departments} = departmentIds
+        const idExists = departments.filter((department)=>department.departmentId===parseInt(departmentId))
+        
+        if(idExists.length===0) throw{status:404,message:'DepartmentId does not exist'}
+      }
+    
 
       
     } catch (error) {
       
       throw error
     }
-
+ 
 
     //1.First try block - 1. Retrieve all valid object Id numbers available to use
     try {
@@ -81,6 +168,22 @@ const numbersRegex = /^[0-9]*$/
       if (searchTerm && numbersRegex.test(searchTerm)=== true) {
         throw { status: 400, message: 'Free search query must be a string data type' };
       }
+    
+    /*   if( isArtistOrCulture && typeof isArtistOrCulture !== 'boolean'){
+        
+        throw { status: 400, message: 'artistOrCulture value must be a boolean data type' };
+      } */
+     
+   /*    if( isTitle && typeof isTitle !== 'boolean'){
+        throw { status: 400, message: 'title value must be a boolean data type' };
+      } */
+     
+    
+  /*     if( isHighlightSelected && typeof isHighlightSelected != 'boolean'){
+        throw { status: 400, message: 'isHighlight value must be a boolean data type' };
+      } */
+
+   
 
       if(parseInt(limit)<10){
         throw{status:400, message:'Results per page can not be lower than 10'}
@@ -97,22 +200,30 @@ const numbersRegex = /^[0-9]*$/
             params: {
                 departmentId:departmentId,
                 medium:type,
-                isHighlight:true,
+                isHighlight:isHighlightSelected,
                 hasImages:true,
-                q:searchTerm 
+                artistOrCulture:isArtistOrCulture,
+                title:isTitle,
+                dateBegin:intDateBegin,
+                dateEnd:intDateEnd,
+                q:searchTerm,
+               
+
+
             }
         }
            
         )
-        
+      
+     
         if(getAvailableIDs.data.objectIDs === null){
           
           throw{status:400,message:'Error fetching availble artwork ids'}
         }
        //Set the object IDs array to the result of getAvailableIDs (located in the key data, then objectIDs)      
        objectIDs=getAvailableIDs.data.objectIDs;
-     
-        
+      
+       
        //Return error if offset number is higher than the number of objects available
        if(parseInt(offset)>objectIDs.length) throw{status:404,message:'Offset or Page start exceeds the number of available artworks'}
 
@@ -134,11 +245,13 @@ const numbersRegex = /^[0-9]*$/
                       if (artPiece.primaryImage && artPiece.primaryImageSmall) {
                         artCollection.push({
                           classification: artPiece.classification,
+                          isHighlight:artPiece.isHighlight,
                           medium: artPiece.medium,
                           id: artPiece.objectID,
                           title: artPiece.title || 'Unknown',
                           artist: artPiece.artistDisplayName || 'Unknown Artist',
-                          date: artPiece.objectEndDate || artPiece.objectDate,
+                          date: artPiece.objectDate || artPiece.objectBeginDate || artPiece.objectEndDate,
+                          numericDate:artPiece.objectBeginDate || artPiece.objectEndDate || undefined,
                           department: artPiece.department,
                           img: artPiece.primaryImage,
                           smallImg: artPiece.primaryImageSmall,
@@ -153,8 +266,45 @@ const numbersRegex = /^[0-9]*$/
                     }
                     currentIndex++;
                   }
-                //Add Number of results to artCollection array
-       
+                
+                 //Sort the artCollecion array in title ASC order  
+                if (sortBy === 'titleASC') {
+                  artCollection.sort((a, b) =>
+                    (a.title || "").localeCompare(b.title || "", undefined, { sensitivity: 'base' })
+                  );
+                }
+                 //Sort the artCollecion array in title ASC order 
+                if (sortBy === 'titleDESC') {
+                  artCollection.sort((a, b) =>
+                    (b.title || "").localeCompare(a.title || "", undefined, { sensitivity: 'base' })
+                  );
+                }
+
+                //Sort the artCollection array in date ASC
+                if(sortBy === 'dateASC') {
+                  artCollection.sort((a,b)=>a.numericDate-b.numericDate)
+                }
+
+                //Sort the artCollection array in date ASC
+                if(sortBy === 'dateDESC') {
+                  artCollection.sort((a,b)=>b.numericDate-a.numericDate)
+                }
+
+                     //Sort the artCollecion array in artist ASC order  
+                     if (sortBy === 'artistASC') {
+                      artCollection.sort((a, b) =>
+                        (a.artist || "").localeCompare(b.artist || "", undefined, { sensitivity: 'base' })
+                      );
+                    }
+                     //Sort the artCollecion array in artist ASC order 
+                    if (sortBy === 'artistDESC') {
+                      artCollection.sort((a, b) =>
+                        (b.artist || "").localeCompare(a.artist || "", undefined, { sensitivity: 'base' })
+                      );
+                    }
+
+
+                 //Add Number of results to artCollection array
                   return {numberOfIds:objectIDs.length,artCollection};
                 } catch (error) {
                   if (error) throw error;

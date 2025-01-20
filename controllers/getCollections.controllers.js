@@ -21,12 +21,13 @@ const getMetArtCollections = async (req,res,next)=>{
 
     //fetch pages
 
-    const {limit,offset,departmentId,type,searchTerm} = req.query
+   /*  const {limit,offset,departmentId,type,searchTerm} = req.query */
+    const {limit,offset,departmentId,type,searchTerm,artistOrCulture,title,isHighlight,dateBegin,dateEnd,sortBy} = req.query
     
     
      try {
 
-        const metCollectionArr = await fetchMetArtCollections(limit,offset,departmentId,type,searchTerm)
+        const metCollectionArr = await fetchMetArtCollections(limit,offset,departmentId,type,searchTerm,artistOrCulture,title,isHighlight,dateBegin,dateEnd,sortBy)
         res.status(200).send({metArtWorks:metCollectionArr})
         
     } catch (error) {
