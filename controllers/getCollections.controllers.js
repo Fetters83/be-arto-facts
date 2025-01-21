@@ -1,4 +1,4 @@
-const { fetchMetArtCollections, fetchArtInstituteChigagoCollections, fetchMetArtDepartments, fetchRijksCollections, fetchMetArtPieceById, fetchRijksArtPieceById, fetchArtInstituteChigagoArtPieceById, fetchArtInstituteChicagoDepartments, fetchArtInstituteChicagoArtWorkTypes } = require("../models/getCollections.models")
+const { fetchMetArtCollections, fetchArtInstituteChigagoCollections, fetchMetArtDepartments, fetchRijksCollections, fetchMetArtPieceById, fetchRijksArtPieceById, fetchArtInstituteChigagoArtPieceById, fetchArtInstituteChicagoDepartments, fetchArtInstituteChicagoArtWorkTypes, fetchArtInstituteChicagoPlaces } = require("../models/getCollections.models")
 
 
 const getMetArtDepartments = async (req,res,next) =>{
@@ -82,14 +82,17 @@ const getRijksArtPieceById = async (req,res,next) =>{
 const getArtInstituteChigagoArtWorkTypes = async(req,res,next)=>{
     try {
        
-        const chicagoArtWorkTypes = await fetchArtInstituteChicagoArtWorkTypes() 
-        const {data} = chicagoArtWorkTypes
-        if(data.data.length===0){
-            throw {status:404,message:'Error retrieving Artwork Types'}
-        }
-        const chicagoArtworkTypesArray = data.data.map((artworkType) => artworkType.title)
-        
-        res.status(200).send(chicagoArtworkTypesArray) 
+        const chicagoArtworkTypes = await fetchArtInstituteChicagoArtWorkTypes() 
+        res.status(200).send({ArtInstituteOfChicagoArtworkTypes:chicagoArtworkTypes}) 
+    } catch (error) {
+        next(error)
+    }
+}
+
+const getArtInstituteChicagoPlaces = async(req,res,next)=>{
+    try {
+        const chicagoPlaces = await fetchArtInstituteChicagoPlaces()
+        res.status(200).send({ArtInstituteOfChicagoPlaces:chicagoPlaces})
     } catch (error) {
         next(error)
     }
@@ -124,4 +127,4 @@ const getArtInstituteChigagoArtPieceById = async (req,res,next)=>{
     }
 }
 
-module.exports = {getMetArtCollections,getRijksCollections,getArtInstituteChigagoCollections,getMetArtDepartments,getMetPieceById,getRijksArtPieceById,getArtInstituteChigagoArtPieceById,getArtInstituteChigagoArtWorkTypes}
+module.exports = {getMetArtCollections,getRijksCollections,getArtInstituteChigagoCollections,getMetArtDepartments,getMetPieceById,getRijksArtPieceById,getArtInstituteChigagoArtPieceById,getArtInstituteChigagoArtWorkTypes,getArtInstituteChicagoPlaces}

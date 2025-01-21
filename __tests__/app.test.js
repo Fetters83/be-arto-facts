@@ -572,9 +572,21 @@ describe.only('/api/collections/ArtInstituteChicago/artworkTypes',()=>{
     const {body} = await request(app)
     .get('/api/collections/ArtInstituteChicago/artworkTypes')
     .expect(200)
-    expect(Array.isArray(body)).toBe(true)
+    const {ArtInstituteOfChicagoArtworkTypes} = body
+    expect(Array.isArray(ArtInstituteOfChicagoArtworkTypes)).toBe(true)
   })
 })
+
+describe.only('/api/collections/ArtInstituteChicago/places',()=>{
+  test('GET 200: call to Chicago Places End point returns an array of places of origin',async()=>{
+    const {body} = await request(app)
+    .get('/api/collections/ArtInstituteChicago/places')
+    .expect(200)
+    const {ArtInstituteOfChicagoPlaces} = body
+    expect(Array.isArray(ArtInstituteOfChicagoPlaces)).toBe(true)
+  })
+})
+
 
   describe('/api/signup',()=>{
     test('POST 201: signing up with email and password generates a custom token and authenticates user',async()=>{
