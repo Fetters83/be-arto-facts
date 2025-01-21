@@ -169,21 +169,8 @@ if (sortBy && !validSortValues.includes(sortBy)) {
         throw { status: 400, message: 'Free search query must be a string data type' };
       }
     
-    /*   if( isArtistOrCulture && typeof isArtistOrCulture !== 'boolean'){
-        
-        throw { status: 400, message: 'artistOrCulture value must be a boolean data type' };
-      } */
-     
-   /*    if( isTitle && typeof isTitle !== 'boolean'){
-        throw { status: 400, message: 'title value must be a boolean data type' };
-      } */
-     
-    
-  /*     if( isHighlightSelected && typeof isHighlightSelected != 'boolean'){
-        throw { status: 400, message: 'isHighlight value must be a boolean data type' };
-      } */
+  
 
-   
 
       if(parseInt(limit)<10){
         throw{status:400, message:'Results per page can not be lower than 10'}
@@ -540,62 +527,88 @@ const fetchArtInstituteChicagoPlaces = async ()=>{
   }
 }
 
-const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,artistName,artTypeTitle,dateBegin,dateEnd,q)=>{
+const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,artistName,artTypeTitle,dateBegin,dateEnd,sortBy,q)=>{
 
 
-  const numbersRegex = /^[0-9]*$/
+  const numbersRegex = /^-?[0-9]*$/
 
+
+  if (q === undefined || q === null || q === "") {
+    q = "";
+  }
   if(placeOfOrigin && numbersRegex.test(placeOfOrigin)) throw({status:400,message:'placeOfOrigin must be a string data type'})
   if(artistName && numbersRegex.test(artistName)) throw({status:400,message:'artistName must be a string data type'})
   if(artTypeTitle && numbersRegex.test(artTypeTitle)) throw({status:400,message:'artTypeTitle must be a string data type'})
   if((!dateBegin && dateEnd)) throw({status:400,message:'you must include a dateBegin value for date filtering'})
     if((dateBegin && !dateEnd)) throw({status:400,message:'you must include a dateEnd value for date filtering'})
   if((dateBegin || dateEnd) && (numbersRegex.test(dateBegin)===false || numbersRegex.test(dateEnd)===false)) throw{status:400,message:'dateBegin and dateEnd values must be integer values'}   
+  if(dateBegin && dateEnd && parseInt(dateBegin,10)>parseInt(dateEnd,10)) throw ({status:400,message:'dateBegin cannot be higher than dateEnd'})
+   
   if(q && numbersRegex.test(q)) throw({status:400,message:'query must be a string data type'})      
 
    //Create the parameters for the axios to search all artwork id's that meet the search crtieria - page(set the page number) 
    // limit(number of results per page), q(free text search term)
    //other properties will be added to params object dynamically below
-   const params = {
-    page:page,
-    limit:limit,
-    q:q
-   }
+ 
+
+    const params = {
+      query: {}, // Query will be populated based on conditions
+      size: limit, // Map "limit" to the "size" parameter
+      from: (page - 1) * limit, // Calculate "from" based on the page number
+      
+    };
 
    //set an index value to 0 at first - elastic query results look like below
-   //query[bool][must][0][match_phrase][place_of_origin]` - the more search criteria we add the more of these lines we must add
-   //if there are two search criterias there will be two of these lines in the array - se we musy dynamically set [must][setNumber here]
-   let currentIndex = 0; // Track the current index for the `must` array
    
-   //If placeOfOrigin was passed in as a query..
+   
 
+   if (placeOfOrigin || artistName || artTypeTitle) {
+    params.query.bool = { must: [] };}
+
+   //If placeOfOrigin was passed in as a query..
     if (placeOfOrigin) {
-    //Add to the params the below elastic search syntax - currentIndex will be 0 for this property
-     params[`query[bool][must][${currentIndex}][match_phrase][place_of_origin]`] = placeOfOrigin;
-     currentIndex++; // Increment the index for the next condition
+    //Add to the params the below elastic search syntax
+   
+
+     params.query.bool.must.push({ match_phrase: { place_of_origin: placeOfOrigin } });
    }
    
    //If artistName was passed in as a query..
    if (artistName) {
-     //Add to the params the below elastic search syntax - currentIndex will be 1 if placeOfOrigin was passed in, 0 if not
-     params[`query[bool][must][${currentIndex}][match_phrase][artist_name]`] = artistName;
-     currentIndex++; // Increment the index for the next condition
+     //Add to the params the below elastic search syntax
+   
+
+    params.query.bool.must.push({ match_phrase: { artist_title: artistName } });
    }
  
    //If artTypeTitle was passed in as a query..
    if (artTypeTitle) {
-     //Add to the params the below elastic search syntax - currentIndex will be 0,1 or 2 depending on whether the above queries were passed in or not
-     params[`query[bool][must][${currentIndex}][match_phrase][artwork_type_title]`] = artTypeTitle;
-     currentIndex++; // Increment the index for the next condition
+     //Add to the params the below elastic search syntax 
+  
+    params.query.bool.must.push({ match_phrase: { artwork_type_title: artTypeTitle } });
+   } else {
+    params.query.match_all = {};
    }
    
    //if dateBegin or dateEnd was passed in as a query..
    if(dateBegin || dateEnd){
-     //Add to the params the below elastic search syntax - currentIndex will be 0,1,2 or 3 depending on whether the above queries were passed in or not
-     params[`query[bool][filter][${currentIndex}][range][date_start][gte]`] = dateBegin 
-     params[`query[bool][filter][${currentIndex}][range][date_start][lte]`] = dateEnd
-     currentIndex++; // Increment the index for the next condition
+     //Add to the params the below elastic search syntax 
+  
+    params.query.bool = params.query.bool || {};
+    params.query.bool.filter = params.query.bool.filter || [];
+
+    const rangeFilter = { range: { date_end: {} } };
+    if (dateBegin !== undefined) {
+      rangeFilter.range.date_end.gte = parseInt(dateBegin, 10); 
+    }
+    if (dateEnd !== undefined) {
+      rangeFilter.range.date_end.lte = parseInt(dateEnd, 10); 
+    }
+
+  params.query.bool.filter.push(rangeFilter)
+
    }
+
 
    if (isNaN(Number(page))) {
     throw { status: 400, message: 'page must be a number data type' };
@@ -605,9 +618,6 @@ const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,arti
     throw { status: 400, message: 'Number of results (limit) must be a number data type' };
   }
  
- /*  if (departmentId && isNaN(Number(departmentId))) {
-    throw { status: 400, message: 'Department ID must be a number data type' };
-  } */
   
   if (artTypeTitle && typeof artTypeTitle !== 'string') {
     throw { status: 400, message: 'Artwork type query must be a string data type' };
@@ -616,18 +626,25 @@ const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,arti
   if (q && typeof q !== 'string') {
     throw { status: 400, message: 'Free search query must be a string data type' };
   }
-        
+  
+  const validSortValues = [
+    'titleASC',
+    'titleDESC',
+    'dateASC',
+    'dateDESC',
+    'artistASC',
+    'artistDESC'
+  ];
+  
+  if (sortBy && !validSortValues.includes(sortBy)) {
+    throw { status: 404, message: "Invalid sortBy value" };
+  }
  
    //1.First try - get a list of artwork IDs that match the criteria from the params object above ({params} is passed into the axio request)
    //The result will something like https://api.artic.edu/api/v1/artworks/search?page=1&limit=10&query[bool][must][0][match_phrase][place_of_origin]=China&query[bool][must][1][match_phrase][artwork_type_title]=Painting'
     try {
         
-
- 
-
-      
-
-        //Make call the API for searching artwork IDs and set to getAvailableIDs
+         //Make call the API for searching artwork IDs and set to getAvailableIDs
         const getAvailableIDs = await axios('https://api.artic.edu/api/v1/artworks/search',{params})
         //Once completed - set availableArtworksObjects to the aboves data.data property where the actual array of objects exists
         const availableArtWorksObjects = getAvailableIDs.data.data;
@@ -685,6 +702,44 @@ const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,arti
                   
                }//End for loop
                //Return the completed artCollection array
+
+                    //Sort the artCollecion array in title ASC order  
+                    if (sortBy === 'titleASC') {
+                      artCollection.sort((a, b) =>
+                        (a.title || "").localeCompare(b.title || "", undefined, { sensitivity: 'base' })
+                      );
+                    }
+                     //Sort the artCollecion array in title ASC order 
+                    if (sortBy === 'titleDESC') {
+                      artCollection.sort((a, b) =>
+                        (b.title || "").localeCompare(a.title || "", undefined, { sensitivity: 'base' })
+                      );
+                    }
+    
+                    //Sort the artCollection array in date ASC
+                    if(sortBy === 'dateASC') {
+                      artCollection.sort((a,b)=>a.date-b.date)
+                    }
+    
+                    //Sort the artCollection array in date ASC
+                    if(sortBy === 'dateDESC') {
+                      artCollection.sort((a,b)=>b.date-a.date)
+                    }
+    
+                         //Sort the artCollecion array in artist ASC order  
+                         if (sortBy === 'artistASC') {
+                          artCollection.sort((a, b) =>
+                            (a.artist || "").localeCompare(b.artist || "", undefined, { sensitivity: 'base' })
+                          );
+                        }
+                         //Sort the artCollecion array in artist ASC order 
+                        if (sortBy === 'artistDESC') {
+                          artCollection.sort((a, b) =>
+                            (b.artist || "").localeCompare(a.artist || "", undefined, { sensitivity: 'base' })
+                          );
+                        }
+    
+
                return artCollection;
                
 

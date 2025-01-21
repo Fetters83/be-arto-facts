@@ -517,9 +517,8 @@ describe('/api/collections/ArtInstitueChicago',()=>{
     } 
 
    })
-  })
 
-  test('GET 400: call to Chicago Art Institute API with missing dateBegin when dateEnd has been sent returns a status of 400 and an error message',async()=>{
+   test('GET 400: call to Chicago Art Institute API with missing dateBegin when dateEnd has been sent returns a status of 400 and an error message',async()=>{
     const {body} = await request(app)
     .get(`/api/collections/ArtInstituteChicago?page=1&limit=10&dateEnd=1900&q=""`)
     .expect(400)
@@ -532,7 +531,20 @@ describe('/api/collections/ArtInstitueChicago',()=>{
     .expect(400)
     expect(body.message).toBe('you must include a dateEnd value for date filtering')
   })
+
+  test('GET 400: call to Chicago Art Institute API where dateBegin is higher than dateEnd or vice versa returns a status of 400 and an error message',async()=>{
+    const {body} = await request(app)
+    .get(`/api/collections/ArtInstituteChicago?page=1&limit=10&dateBegin=1800&dateEnd=1700&q=""`)
+    .expect(400)
+    expect(body.message).toBe('dateBegin cannot be higher than dateEnd')
+  })
   
+  test('GET 400: call to Chicago Art Institute API with missing dateEnd when dateBegin has been sent returns a status of 400 and an error message',async()=>{
+    const {body} = await request(app)
+    .get(`/api/collections/ArtInstituteChicago?page=1&limit=10&dateBegin=XXX&dateEnd=1900&q=""`)
+    .expect(400)
+    expect(body.message).toBe('dateBegin and dateEnd values must be integer values')
+  })
   
   test('GET 400: call to Chicago Art Institute API with an invalid page query returns a 400 staus with an error message',async ()=>{
     const {body} = await request(app)
@@ -555,6 +567,106 @@ describe('/api/collections/ArtInstitueChicago',()=>{
     expect(body.message).toBe('query must be a string data type')
    
   })
+
+  test('GET 200: call to Chicago Art Institute API with sortBy of title  and sortOrder of desc returns objects in descending order by title ',async()=>{
+    const {body:{ArtInstituteOfChicago}} = await request(app)
+    .get(`/api/collections/ArtInstituteChicago?page=1&limit=10&artTypeTitle=Painting&placeOfOrigin=China&sortBy=titleDESC&q=""`)
+    .expect(200)
+
+     const asciOnlyMap = ArtInstituteOfChicago.map((artPiece)=>
+      artPiece.title.replace(/[^\x00-\x7F]/g, "")
+    )
+
+    expect(asciOnlyMap).toBeSorted({
+      descending:true
+    }) 
+
+  })
+
+
+  test('GET 200: call to Chicago Art Institute API with sortBy of title  and sortOrder of asc returns objects in ascending order by title ',async()=>{
+    const {body:{ArtInstituteOfChicago}} = await request(app)
+    .get(`/api/collections/ArtInstituteChicago?page=1&limit=10&artTypeTitle=Painting&placeOfOrigin=China&sortBy=titleASC&q=""`)
+    .expect(200)
+
+     const asciOnlyMap = ArtInstituteOfChicago.map((artPiece)=>
+      artPiece.title.replace(/[^\x00-\x7F]/g, "")
+    )
+
+    expect(asciOnlyMap).toBeSorted({
+      descending:false
+    }) 
+
+  })
+
+  test('GET 200: call to Chicago Art Institute API with sortBy of date  and sortOrder of desc returns objects in descending order by title ',async()=>{
+    const {body:{ArtInstituteOfChicago}} = await request(app)
+    .get(`/api/collections/ArtInstituteChicago?page=1&limit=10&artTypeTitle=Painting&placeOfOrigin=China&sortBy=dateDESC&q=""`)
+    .expect(200)
+
+     const datesMap = ArtInstituteOfChicago.map((artPiece)=>
+      artPiece.date
+    )
+
+    expect(datesMap).toBeSorted({
+      descending:true
+    }) 
+
+  })
+
+  test('GET 200: call to Chicago Art Institute API with sortBy of date  and sortOrder of asc returns objects in ascending order by title ',async()=>{
+    const {body:{ArtInstituteOfChicago}} = await request(app)
+    .get(`/api/collections/ArtInstituteChicago?page=1&limit=10&artTypeTitle=Painting&placeOfOrigin=China&sortBy=dateASC&q=""`)
+    .expect(200)
+
+     const datesMap = ArtInstituteOfChicago.map((artPiece)=>
+      artPiece.date
+    )
+
+    expect(datesMap).toBeSorted({
+      descending:false
+    }) 
+
+  })
+
+  test('GET 200: call to Chicago Art Institute API with sortBy of artist  and sortOrder of desc returns objects in descending order by title ',async()=>{
+    const {body:{ArtInstituteOfChicago}} = await request(app)
+    .get(`/api/collections/ArtInstituteChicago?page=1&limit=10&artTypeTitle=Painting&placeOfOrigin=China&sortBy=artistDESC&q=""`)
+    .expect(200)
+
+     const asciOnlyMap = ArtInstituteOfChicago.map((artPiece)=>
+      artPiece.artist.replace(/[^\x00-\x7F]/g, "")
+    )
+   
+    expect(asciOnlyMap).toBeSorted({
+      descending:true
+    }) 
+
+  })
+
+
+  test('GET 200: call to Chicago Art Institute API with sortBy of artist and sortOrder of asc returns objects in ascending order by title ',async()=>{
+    const {body:{ArtInstituteOfChicago}} = await request(app)
+    .get(`/api/collections/ArtInstituteChicago?page=1&limit=10&artTypeTitle=Painting&placeOfOrigin=China&sortBy=artistASC&q=""`)
+    .expect(200)
+
+     const asciOnlyMap = ArtInstituteOfChicago.map((artPiece)=>
+      artPiece.artist.replace(/[^\x00-\x7F]/g, "")
+    )
+
+  
+
+    expect(asciOnlyMap).toBeSorted({
+      descending:false
+    }) 
+
+  })
+
+  })
+
+
+
+
 
 
 

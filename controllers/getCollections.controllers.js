@@ -100,11 +100,11 @@ const getArtInstituteChicagoPlaces = async(req,res,next)=>{
 
 const getArtInstituteChigagoCollections = async (req,res,next)=>{
     
-    const {page,limit,placeOfOrigin,artistName,artTypeTitle,dateBegin,dateEnd,q} = req.query
+    const {page,limit,placeOfOrigin,artistName,artTypeTitle,dateBegin,dateEnd,sortBy,q} = req.query
 
     try {
         
-        const artICArr = await fetchArtInstituteChigagoCollections(page,limit,placeOfOrigin,artistName,artTypeTitle,dateBegin,dateEnd,q)
+        const artICArr = await fetchArtInstituteChigagoCollections(page,limit,placeOfOrigin,artistName,artTypeTitle,dateBegin,dateEnd,sortBy,q)
         res.status(200).send({ArtInstituteOfChicago:artICArr})
     } catch (error) {
 
