@@ -490,6 +490,18 @@ const fetchRijksArtPieceById = async(id)=>{
 }
 }
 
+const fetchArtInstituteChicagoArtWorkTypes = async () => {
+  
+  try {
+    const artworkTypeData = await axios('https://api.artic.edu/api/v1/artwork-types', {params:{limit:50}})
+    return artworkTypeData
+  } catch (error) {
+     throw error
+  }
+
+};
+
+
 const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,artistName,artTypeTitle,q)=>{
 
 
@@ -698,4 +710,4 @@ const fetchArtInstituteChigagoArtPieceById = async(id)=>{
   
 }
 
-module.exports = {fetchMetArtCollections,fetchRijksCollections,fetchArtInstituteChigagoCollections,fetchMetArtDepartments,fetchMetArtPieceById,fetchRijksArtPieceById,fetchArtInstituteChigagoArtPieceById}
+module.exports = {fetchMetArtCollections,fetchRijksCollections,fetchArtInstituteChigagoCollections,fetchMetArtDepartments,fetchMetArtPieceById,fetchRijksArtPieceById,fetchArtInstituteChigagoArtPieceById,fetchArtInstituteChicagoArtWorkTypes}
