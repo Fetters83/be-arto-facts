@@ -494,13 +494,51 @@ const fetchArtInstituteChicagoArtWorkTypes = async () => {
   
   try {
     const artworkTypeData = await axios('https://api.artic.edu/api/v1/artwork-types', {params:{limit:50}})
-    return artworkTypeData
+    const {data} = artworkTypeData
+        if(data.data.length===0){
+            throw {status:404,message:'Error retrieving Artwork Types'}
+        }
+        const chicagoArtworkTypesArray = data.data.map((artworkType) => artworkType.title)
+    return chicagoArtworkTypesArray
   } catch (error) {
      throw error
   }
 
 };
 
+const fetchArtInstituteChicagoPlaces = async ()=>{
+  try {
+    
+    
+
+
+
+    const paginationData = await axios(`https://api.artic.edu/api/v1/places`,
+      {params:{limit:100}}
+    )
+    const {pagination} = paginationData.data
+   
+    const pages = pagination.total_pages
+  
+    let placesArray = []
+    for(let i = 1; i<=pages;i++ ){
+      const placesData = await axios(`https://api.artic.edu/api/v1/places`,
+        {params:{limit:100,page:i}}
+      )
+      
+      const {data} = placesData.data
+      const placesMap = data.map((place)=>place.title)
+      placesArray.push(...placesMap)
+   
+    }
+    
+
+    return placesArray
+
+  } catch (error) {
+    throw error
+  }
+}
 
 const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,artistName,artTypeTitle,q)=>{
 
@@ -710,4 +748,4 @@ const fetchArtInstituteChigagoArtPieceById = async(id)=>{
   
 }
 
-module.exports = {fetchMetArtCollections,fetchRijksCollections,fetchArtInstituteChigagoCollections,fetchMetArtDepartments,fetchMetArtPieceById,fetchRijksArtPieceById,fetchArtInstituteChigagoArtPieceById,fetchArtInstituteChicagoArtWorkTypes}
+module.exports = {fetchMetArtCollections,fetchRijksCollections,fetchArtInstituteChigagoCollections,fetchMetArtDepartments,fetchMetArtPieceById,fetchRijksArtPieceById,fetchArtInstituteChigagoArtPieceById,fetchArtInstituteChicagoArtWorkTypes,fetchArtInstituteChicagoPlaces}
