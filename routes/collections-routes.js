@@ -19,8 +19,8 @@ collectionsRouter.get('/RijksMuseum/:id',getRijksArtPieceById)
 
 collectionsRouter.get('/ArtInstituteChicago/artworkTypes',getArtInstituteChigagoArtWorkTypes)
 collectionsRouter.get('/ArtInstituteChicago/places',getArtInstituteChicagoPlaces)
-collectionsRouter.get('/ArtInstitueChicago',getArtInstituteChigagoCollections)
-collectionsRouter.get('/ArtInstitueChicago/:id',getArtInstituteChigagoArtPieceById)
+collectionsRouter.get('/ArtInstituteChicago',getArtInstituteChigagoCollections)
+collectionsRouter.get('/ArtInstituteChicago/:id',getArtInstituteChigagoArtPieceById)
 
 
 module.exports = collectionsRouter

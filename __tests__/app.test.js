@@ -495,7 +495,7 @@ describe('/api/collections/ArtInstitueChicago',()=>{
   })
   test('GET 200: call to Chicago Art Institute API returns a 200 staus with an array of objects containing the correct keys and datatypes',async ()=>{
     const {body:{ArtInstituteOfChicago}} = await request(app)
-    .get('/api/collections/ArtInstitueChicago?page=1&limit=10&q=""&placeOfOrigin=China')
+    .get('/api/collections/ArtInstituteChicago?page=1&limit=10&q=""&placeOfOrigin=China')
     .expect(200)
     
     
@@ -503,10 +503,36 @@ describe('/api/collections/ArtInstitueChicago',()=>{
     
       expect(ArtInstituteOfChicago[i].country === 'China').toBe(true)
      
+    }
+  }) 
+ 
+   test('GET 200: call to Chicago Art Institute API with dateBegin and dateEnd queries returns artworks between those dates',async()=>{
+    const {body:{ArtInstituteOfChicago}} = await request(app)
+    .get(`/api/collections/ArtInstituteChicago?page=1&limit=10&dateBegin=1800&dateEnd=1900&q=""`)
+    .expect(200)
+
+     for(let i=0; i<ArtInstituteOfChicago.length;i++){
+      expect(ArtInstituteOfChicago[i].date >=1800 && ArtInstituteOfChicago[i].date <=1900).toBe(true)
+     
     } 
-   
+
+   })
   })
 
+  test('GET 400: call to Chicago Art Institute API with missing dateBegin when dateEnd has been sent returns a status of 400 and an error message',async()=>{
+    const {body} = await request(app)
+    .get(`/api/collections/ArtInstituteChicago?page=1&limit=10&dateEnd=1900&q=""`)
+    .expect(400)
+    expect(body.message).toBe('you must include a dateBegin value for date filtering')
+  })
+
+  test('GET 400: call to Chicago Art Institute API with missing dateEnd when dateBegin has been sent returns a status of 400 and an error message',async()=>{
+    const {body} = await request(app)
+    .get(`/api/collections/ArtInstituteChicago?page=1&limit=10&dateBegin=1800&q=""`)
+    .expect(400)
+    expect(body.message).toBe('you must include a dateEnd value for date filtering')
+  })
+  
   
   test('GET 400: call to Chicago Art Institute API with an invalid page query returns a 400 staus with an error message',async ()=>{
     const {body} = await request(app)
@@ -530,7 +556,7 @@ describe('/api/collections/ArtInstitueChicago',()=>{
    
   })
 
-})
+
 
 describe('api/collections/ArtInstitueChicago/:id',()=>{
   test('GET 200: call to Chicago Institute of Art API by id returns an object with all the correct keys and datatypes of a single artwork',async()=>{
@@ -567,7 +593,7 @@ describe('api/collections/ArtInstitueChicago/:id',()=>{
 })
 
 
-describe.only('/api/collections/ArtInstituteChicago/artworkTypes',()=>{
+describe('/api/collections/ArtInstituteChicago/artworkTypes',()=>{
   test('GET 200: call to Chicago Artwork types API returns an array of artwork types',async()=>{
     const {body} = await request(app)
     .get('/api/collections/ArtInstituteChicago/artworkTypes')
@@ -577,7 +603,7 @@ describe.only('/api/collections/ArtInstituteChicago/artworkTypes',()=>{
   })
 })
 
-describe.only('/api/collections/ArtInstituteChicago/places',()=>{
+describe('/api/collections/ArtInstituteChicago/places',()=>{
   test('GET 200: call to Chicago Places End point returns an array of places of origin',async()=>{
     const {body} = await request(app)
     .get('/api/collections/ArtInstituteChicago/places')
@@ -1161,4 +1187,3 @@ describe('/api/art-collections/collections/:collectionId',()=>{
   });
   
 })   
-

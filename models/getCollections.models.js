@@ -540,7 +540,7 @@ const fetchArtInstituteChicagoPlaces = async ()=>{
   }
 }
 
-const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,artistName,artTypeTitle,q)=>{
+const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,artistName,artTypeTitle,dateBegin,dateEnd,q)=>{
 
 
   const numbersRegex = /^[0-9]*$/
@@ -548,6 +548,9 @@ const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,arti
   if(placeOfOrigin && numbersRegex.test(placeOfOrigin)) throw({status:400,message:'placeOfOrigin must be a string data type'})
   if(artistName && numbersRegex.test(artistName)) throw({status:400,message:'artistName must be a string data type'})
   if(artTypeTitle && numbersRegex.test(artTypeTitle)) throw({status:400,message:'artTypeTitle must be a string data type'})
+  if((!dateBegin && dateEnd)) throw({status:400,message:'you must include a dateBegin value for date filtering'})
+    if((dateBegin && !dateEnd)) throw({status:400,message:'you must include a dateEnd value for date filtering'})
+  if((dateBegin || dateEnd) && (numbersRegex.test(dateBegin)===false || numbersRegex.test(dateEnd)===false)) throw{status:400,message:'dateBegin and dateEnd values must be integer values'}   
   if(q && numbersRegex.test(q)) throw({status:400,message:'query must be a string data type'})      
 
    //Create the parameters for the axios to search all artwork id's that meet the search crtieria - page(set the page number) 
@@ -586,6 +589,13 @@ const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,arti
      currentIndex++; // Increment the index for the next condition
    }
    
+   //if dateBegin or dateEnd was passed in as a query..
+   if(dateBegin || dateEnd){
+     //Add to the params the below elastic search syntax - currentIndex will be 0,1,2 or 3 depending on whether the above queries were passed in or not
+     params[`query[bool][filter][${currentIndex}][range][date_start][gte]`] = dateBegin 
+     params[`query[bool][filter][${currentIndex}][range][date_start][lte]`] = dateEnd
+     currentIndex++; // Increment the index for the next condition
+   }
 
    if (isNaN(Number(page))) {
     throw { status: 400, message: 'page must be a number data type' };
