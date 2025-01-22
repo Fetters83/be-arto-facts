@@ -139,9 +139,6 @@ Environment Variables
 * GET /api/collections/MetArtMuseum: Fetch artworks with filters
 * GET /api/collections/MetArtMuseum/departments: Fetch list of departments
 * GET /api/collections/MetArtMuseum/:id: Fetch details of a single artwork by ID
-*Rijksmuseum
-* GET /api/collections/RijksMuseum: Fetch artworks with filters
-* GET /api/collections/RijksMuseum/:id: Fetch details of a single artwork by ID
 *Art Institute of Chicago
 * GET /api/collections/ArtInstitueChicago: Fetch artworks with filters
 * GET /api/collections/ArtInstitueChicago/:id: Fetch details of a single artwork by ID
@@ -156,9 +153,6 @@ Manage Collections
 # Usage
 Metropolitan Museum of Art
  - Filter Parameters: limit, offset, departmentId, type, searchTerm.
- - Example: GET /api/collections/MetArtMuseum?limit=10&offset=0&departmentId=11&type=Painting&searchTerm=Nature
- Rijksmuseum
- - Filter Parameters: p (page), ps (page size), type, searchTerm, sortQuery, involvedMaker
  - Example: GET /api/collections/MetArtMuseum?limit=10&offset=0&departmentId=11&type=Painting&searchTerm=Nature
  Art Institute of Chicago
  - Filter Parameters: page, limit, placeOfOrigin, artistName, artTypeTitle, q (search query).
