@@ -126,9 +126,9 @@ if (sortBy && !validSortValues.includes(sortBy)) {
   //ensure request query department Id exists
     try {
       
-      if (departmentId && isNaN(parseInt(departmentId))) {
+     /*  if (departmentId && isNaN(parseInt(departmentId))) {
         throw { status: 400, message: 'Department ID must be a number data type' };
-      }
+      } */
 
       if(departmentId){
         const departmentIds = await fetchMetArtDepartments()
@@ -226,7 +226,7 @@ if (sortBy && !validSortValues.includes(sortBy)) {
                         `https://collectionapi.metmuseum.org/public/collection/v1/objects/${objectId}`
                       );
     
-                      //the art work obeject will be located in the  object getArtPiece under the property data - set artPiece to this value
+                      //the art work obeject will e located in the  object getArtPiece under the property data - set artPiece to this value
                       const artPiece = getArtPiece.data;
 
                       if (artPiece.primaryImage && artPiece.primaryImageSmall) {
