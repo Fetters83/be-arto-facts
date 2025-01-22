@@ -2,12 +2,8 @@ const { fetchMetArtCollections, fetchArtInstituteChigagoCollections, fetchMetArt
 
 
 const getMetArtDepartments = async (req,res,next) =>{
-    try {
-        
-        
-        
+    try {       
         const metDepartmentsArr = await fetchMetArtDepartments();
-
         res.status(200).send(metDepartmentsArr)
     } catch (error) {
         next(error)
@@ -21,10 +17,8 @@ const getMetArtCollections = async (req,res,next)=>{
 
     //fetch pages
 
-   /*  const {limit,offset,departmentId,type,searchTerm} = req.query */
-    const {limit,offset,departmentId,type,searchTerm,artistOrCulture,title,isHighlight,dateBegin,dateEnd,sortBy} = req.query
-    
-    
+      const {limit,offset,departmentId,type,searchTerm,artistOrCulture,title,isHighlight,dateBegin,dateEnd,sortBy} = req.query
+
      try {
 
         const metCollectionArr = await fetchMetArtCollections(limit,offset,departmentId,type,searchTerm,artistOrCulture,title,isHighlight,dateBegin,dateEnd,sortBy)
@@ -54,30 +48,7 @@ const getMetPieceById = async (req,res,next)=>{
     }
 
 }
-const getRijksCollections = async (req,res,next)=>{
-    const {p,ps,type,searchTerm,s,involvedMaker} = req.query
 
-    try {
-        const rijksCollectionArr = await fetchRijksCollections(p, ps,type,searchTerm,s,involvedMaker)
-        res.status(200).send({rijksArtWorks:rijksCollectionArr})
-        
-    } catch (error) {
-
-        next(error)
-        
-    }
-
-}
-
-const getRijksArtPieceById = async (req,res,next) =>{
-    const {id} = req.params
-    try {
-        const artPiece = await fetchRijksArtPieceById(id)
-        res.status(200).send(artPiece)
-    } catch (error) {
-        next(error)
-    }
-}
 
 const getArtInstituteChigagoArtWorkTypes = async(req,res,next)=>{
     try {

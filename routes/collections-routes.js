@@ -8,13 +8,6 @@ collectionsRouter.get('/MetArtMuseum/:id',getMetPieceById)
 collectionsRouter.get('/MetArtMuseum',getMetArtCollections)
 
 
-
-//get Rijks Museum Art Pieces
-
-collectionsRouter.get('/RijksMuseum',getRijksCollections)
-collectionsRouter.get('/RijksMuseum/:id',getRijksArtPieceById)
-
-
 //get Art Institute of Chicago Museum Pieces
 
 collectionsRouter.get('/ArtInstituteChicago/artworkTypes',getArtInstituteChigagoArtWorkTypes)
