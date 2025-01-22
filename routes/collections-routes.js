@@ -1,4 +1,4 @@
-const { getMetArtCollections, getArtInstituteChigagoCollections, getMetArtDepartments, getRijksCollections, getMetPieceById, getRijksArtPieceById, getArtInstituteChigagoArtPieceById, getArtInstituteChigagoArtWorkTypes, getArtInstituteChicagoPlaces } = require('../controllers/getCollections.controllers')
+const { getMetArtCollections, getArtInstituteChigagoCollections, getMetArtDepartments, getMetPieceById, getArtInstituteChigagoArtPieceById, getArtInstituteChigagoArtWorkTypes, getArtInstituteChicagoPlaces } = require('../controllers/getCollections.controllers')
 
 const collectionsRouter = require('express').Router()
 

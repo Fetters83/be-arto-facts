@@ -1,4 +1,4 @@
-const { fetchMetArtCollections, fetchArtInstituteChigagoCollections, fetchMetArtDepartments, fetchRijksCollections, fetchMetArtPieceById, fetchRijksArtPieceById, fetchArtInstituteChigagoArtPieceById, fetchArtInstituteChicagoDepartments, fetchArtInstituteChicagoArtWorkTypes, fetchArtInstituteChicagoPlaces } = require("../models/getCollections.models")
+const { fetchMetArtCollections, fetchArtInstituteChigagoCollections, fetchMetArtDepartments, fetchMetArtPieceById, fetchArtInstituteChigagoArtPieceById, fetchArtInstituteChicagoArtWorkTypes, fetchArtInstituteChicagoPlaces } = require("../models/getCollections.models")
 
 
 const getMetArtDepartments = async (req,res,next) =>{
@@ -99,4 +99,4 @@ const getArtInstituteChigagoArtPieceById = async (req,res,next)=>{
     }
 }
 
-module.exports = {getMetArtCollections,getRijksCollections,getArtInstituteChigagoCollections,getMetArtDepartments,getMetPieceById,getRijksArtPieceById,getArtInstituteChigagoArtPieceById,getArtInstituteChigagoArtWorkTypes,getArtInstituteChicagoPlaces}
+module.exports = {getMetArtCollections,getArtInstituteChigagoCollections,getMetArtDepartments,getMetPieceById,getArtInstituteChigagoArtPieceById,getArtInstituteChigagoArtWorkTypes,getArtInstituteChicagoPlaces}

@@ -357,12 +357,7 @@ const fetchArtInstituteChicagoArtWorkTypes = async () => {
 
 const fetchArtInstituteChicagoPlaces = async ()=>{
   try {
-    
-    
-
-
-
-    const paginationData = await axios(`https://api.artic.edu/api/v1/places`,
+          const paginationData = await axios(`https://api.artic.edu/api/v1/places`,
       {params:{limit:100}}
     )
     const {pagination} = paginationData.data
@@ -381,7 +376,6 @@ const fetchArtInstituteChicagoPlaces = async ()=>{
    
     }
     
-
     return placesArray
 
   } catch (error) {
@@ -675,4 +669,4 @@ const fetchArtInstituteChigagoArtPieceById = async(id)=>{
   
 }
 
-module.exports = {fetchMetArtCollections,fetchRijksCollections,fetchArtInstituteChigagoCollections,fetchMetArtDepartments,fetchMetArtPieceById,fetchRijksArtPieceById,fetchArtInstituteChigagoArtPieceById,fetchArtInstituteChicagoArtWorkTypes,fetchArtInstituteChicagoPlaces}
+module.exports = {fetchMetArtCollections,fetchArtInstituteChigagoCollections,fetchMetArtDepartments,fetchMetArtPieceById,fetchArtInstituteChigagoArtPieceById,fetchArtInstituteChicagoArtWorkTypes,fetchArtInstituteChicagoPlaces}
