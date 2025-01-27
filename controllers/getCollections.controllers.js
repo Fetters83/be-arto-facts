@@ -1,4 +1,4 @@
-const { fetchMetArtCollections, fetchArtInstituteChigagoCollections, fetchMetArtDepartments, fetchMetArtPieceById, fetchArtInstituteChigagoArtPieceById, fetchArtInstituteChicagoArtWorkTypes, fetchArtInstituteChicagoPlaces } = require("../models/getCollections.models")
+const { fetchMetArtCollections, fetchArtInstituteChigagoCollections, fetchMetArtDepartments, fetchMetArtPieceById, fetchArtInstituteChigagoArtPieceById, fetchArtInstituteChicagoArtWorkTypes, fetchArtInstituteChicagoPlaces, fetchClevelandArtCollections, fetchClevelandArtPiece } = require("../models/getCollections.models")
 
 
 const getMetArtDepartments = async (req,res,next) =>{
@@ -99,4 +99,25 @@ const getArtInstituteChigagoArtPieceById = async (req,res,next)=>{
     }
 }
 
-module.exports = {getMetArtCollections,getArtInstituteChigagoCollections,getMetArtDepartments,getMetPieceById,getArtInstituteChigagoArtPieceById,getArtInstituteChigagoArtWorkTypes,getArtInstituteChicagoPlaces}
+const getClevelandArtCollections = async (req,res,next) =>{
+    const {q,skip, limit, department,culture,type,created_before, created_after,title,artists,sortBy} = req.query
+
+    try {
+        const clevelandArtWorks = await fetchClevelandArtCollections(q,skip, limit, department,culture,type,created_before, created_after,title,artists,sortBy)
+        res.status(200).send({clevelandArtPieces:clevelandArtWorks})
+    } catch (error) {
+        next(error)
+    }
+}
+
+const getClevelandArtPieceById = async (req,res,next)=>{
+    const {id} = req.params
+    try {
+        const clevelandArtPiece = await fetchClevelandArtPiece(id)
+        res.status(200).send({clevelandArtPiece})
+    } catch (error) {
+        next(error)
+    }
+}
+
+module.exports = {getMetArtCollections,getArtInstituteChigagoCollections,getMetArtDepartments,getMetPieceById,getArtInstituteChigagoArtPieceById,getArtInstituteChigagoArtWorkTypes,getArtInstituteChicagoPlaces,getClevelandArtCollections,getClevelandArtPieceById}

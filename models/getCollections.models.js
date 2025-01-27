@@ -3,6 +3,7 @@ const {config} = require('../firebaseConfig')
 const { messaging } = require('firebase-admin')
 const rijks_api_key = config.rijks_api_key
 const user_collection_id=config.user_collection_id
+const Bottleneck = require("bottleneck");
 
 
 const fetchMetArtDepartments = async ()=>{
@@ -26,279 +27,122 @@ const fetchMetArtDepartments = async ()=>{
   }
 }
 
-const fetchMetArtCollections = async (limit,offset,departmentId,type,searchTerm,artistOrCulture,title,isHighlight,dateBegin,dateEnd,sortBy) => {
+const fetchMetArtCollections = async (
+  limit,
+  offset,
+  departmentId,
+  type,
+  searchTerm,
+  artistOrCulture,
+  title,
+  isHighlight,
+  dateBegin,
+  dateEnd,
+  sortBy
+) => {
+  const resultsPerPage = parseInt(limit);
+  const artCollection = [];
+  let objectIDs = [];
 
-const numbersRegex = /^[0-9]*$/
+  const isArtistOrCulture = artistOrCulture === "true";
+  const isTitle = title === "true";
+  const isHighlightSelected = isHighlight === "true";
 
-//Ensure at least the limit, offset, and searchTerm keys are present
+  const intDateBegin = dateBegin ? parseInt(dateBegin) : undefined;
+  const intDateEnd = dateEnd ? parseInt(dateEnd) : undefined;
 
-if (limit === undefined) {
-  throw { status: 404, message: "Search term key must be present" };
-}
+  try {
+    // Fetch available IDs with initial filtering
+    const getAvailableIDs = await axios(`https://collectionapi.metmuseum.org/public/collection/v1/search`, {
+      params: {
+        departmentId,
+        medium: type,
+        isHighlight: isHighlightSelected,
+        hasImages: true,
+        artistOrCulture: isArtistOrCulture,
+        title: isTitle,
+        dateBegin: intDateBegin,
+        dateEnd: intDateEnd,
+        q: searchTerm,
+      },
+    });
 
-if (offset === undefined) {
-  throw { status: 404, message: "Search term key must be present" };
-}
-
-
-
-if (searchTerm === undefined || searchTerm === null || searchTerm === "") {
-  searchTerm = "";
-}
-
-
-if((dateBegin && !dateEnd)||(dateEnd && !dateBegin)) {
-  throw { status: 404, message: "Era searches must have both dateBegin and dateEnd values" };
-
-}
-
-if(artistOrCulture && (artistOrCulture !== 'true' && artistOrCulture !== 'false')){
-  throw { status: 400, message: 'artistOrCulture value must be a boolean data type' };
-}
-
-if(title && (title !== 'true' && title!== 'false')){
-  throw { status: 400, message: 'title value must be a boolean data type' };
-}
-
-if(isHighlight && (isHighlight !== 'true' && isHighlight!== 'false')){
-  throw { status: 400, message: 'isHighlight value must be a boolean data type' };
-}
-
-if (dateBegin && isNaN(parseInt(dateBegin))){
-  throw  {status :400, message: 'dateBegin must be an integer value'}
-}
-
-if (dateEnd && isNaN(parseInt(dateEnd))){
-  throw  {status :400, message: 'dateEnd must be an integer value'}
-}
-
-
-
-const validSortValues = [
-  'titleASC',
-  'titleDESC',
-  'dateASC',
-  'dateDESC',
-  'artistASC',
-  'artistDESC'
-];
-
-if (sortBy && !validSortValues.includes(sortBy)) {
-  throw { status: 404, message: "Invalid sortBy value" };
-}
-
-
-
-
-   //Results per page
-    const resultsPerPage = parseInt(limit);
-   //Initialise empty art collection array 
-    const artCollection = [];
-    //Initialise empty object id array for the initial capture of available IDs
-    let objectIDs = [];
-    //offset will be a string, so convert it to an integer, this is the start point of the iteration through the  objects array
-    let currentIndex = parseInt(offset);
-
-
-    const isArtistOrCulture = artistOrCulture !== undefined && artistOrCulture !== null
-    ? artistOrCulture === 'true'
-    : undefined;
-
-  const isTitle = title !== undefined && title !== null
-    ? title === 'true'
-    : undefined;
-  
- 
-   
-  const isHighlightSelected = isHighlight !== undefined && isHighlight !== null
-    ? isHighlight === 'true'
-    : undefined;
-
-   
-
-   const intDateBegin = dateBegin !== undefined && dateBegin !== null
-   ? dateBegin = parseInt(dateBegin) : undefined
-
-
-   const intDateEnd = dateEnd !== undefined && dateEnd !== null
-   ? dateEnd = parseInt(dateEnd) : undefined
-  
-  //ensure request query department Id exists
-    try {
-      
-     /*  if (departmentId && isNaN(parseInt(departmentId))) {
-        throw { status: 400, message: 'Department ID must be a number data type' };
-      } */
-
-      if(departmentId){
-        const departmentIds = await fetchMetArtDepartments()
-        const {departments} = departmentIds
-        const idExists = departments.filter((department)=>department.departmentId===parseInt(departmentId))
-        
-        if(idExists.length===0) throw{status:404,message:'DepartmentId does not exist'}
-      }
-    
-
-      
-    } catch (error) {
-      
-      throw error
+    if (!getAvailableIDs.data.objectIDs || getAvailableIDs.data.objectIDs.length === 0) {
+      throw { status: 404, message: "No artworks found for the given filters." };
     }
- 
 
-    //1.First try block - 1. Retrieve all valid object Id numbers available to use
-    try {
-            //Validate queries
-         
-            
-    if (isNaN(parseInt(limit))) {
-        throw { status: 400, message: 'Results per page must be a number data type' };
-      }
-  
-      if (isNaN(parseInt(offset))) {
-        throw { status: 400, message: 'Artwork result starting position must be a number data type' };
-      }
-  
-    
-      if (type && numbersRegex.test(type)=== true) {
-        
-        throw { status: 400, message: 'Artwork type query must be a string data type' };
-      }
-  
-      if (searchTerm && numbersRegex.test(searchTerm)=== true) {
-        throw { status: 400, message: 'Free search query must be a string data type' };
-      }
-    
-  
+    objectIDs = getAvailableIDs.data.objectIDs;
 
+    // Ensure offset is within bounds
+    if (offset >= objectIDs.length) {
+      throw { status: 404, message: "Offset exceeds available artworks" };
+    }
 
-      if(parseInt(limit)<10){
-        throw{status:400, message:'Results per page can not be lower than 10'}
-      }
-      if(parseInt(limit)>50){
-        throw{status:400, message:'Results per page can not exceed 50'}
-      }
+    // Slice IDs for pagination
+    const paginatedObjectIDs = objectIDs.slice(offset, offset + resultsPerPage);
 
-        //1.
+    // Bottleneck instance for throttling requests
+    const limiter = new Bottleneck({
+      maxConcurrent: 10, // Maximum number of concurrent requests
+      minTime: 125, // Minimum time between requests in ms
+    });
 
-        //Retrieve all valid artwork/object IDs first - filtered by department id, type of artwork and any other search criteria
-        //Those objects which are highlights and hasImages tend to have all image size available
-        const getAvailableIDs = await axios(`https://collectionapi.metmuseum.org/public/collection/v1/search`,{
-            params: {
-                departmentId:departmentId,
-                medium:type,
-                isHighlight:isHighlightSelected,
-                hasImages:true,
-                artistOrCulture:isArtistOrCulture,
-                title:isTitle,
-                dateBegin:intDateBegin,
-                dateEnd:intDateEnd,
-                q:searchTerm,
-               
+    // Function to fetch individual artwork details
+    const fetchArtPiece = async (objectId) => {
+      try {
+        const getArtPiece = await axios(
+          `https://collectionapi.metmuseum.org/public/collection/v1/objects/${objectId}`
+        );
+        const artPiece = getArtPiece.data;
 
-
-            }
+        if (artPiece.primaryImage && artPiece.primaryImageSmall) {
+          artCollection.push({
+            classification: artPiece.classification || "Unknown Classification",
+            isHighlight: artPiece.isHighlight || "Unknown",
+            medium: artPiece.medium || "Unknown",
+            id: artPiece.objectID || "Unknown",
+            title: artPiece.title || "Unknown title",
+            artist: artPiece.artistDisplayName || "Unknown Artist",
+            date: artPiece.objectDate || artPiece.objectBeginDate || artPiece.objectEndDate || "Unknown date",
+            numericDate: artPiece.objectBeginDate || artPiece.objectEndDate || undefined,
+            department: artPiece.department || "Unknown Department",
+            img: artPiece.primaryImage || undefined,
+            smallImg: artPiece.primaryImageSmall || undefined,
+            country: artPiece.country || "Unknown",
+            creditedTo: artPiece.creditLine || "Credited to unknown",
+            alt: artPiece.objectName || "Unknown Object Type",
+          });
         }
-           
-        )
-      
-     
-        if(getAvailableIDs.data.objectIDs === null){
-          
-          throw{status:400,message:'Error fetching availble artwork ids'}
-        }
-       //Set the object IDs array to the result of getAvailableIDs (located in the key data, then objectIDs)      
-       objectIDs=getAvailableIDs.data.objectIDs;
-      
-       
-       //Return error if offset number is higher than the number of objects available
-       if(parseInt(offset)>objectIDs.length) throw{status:404,message:'Offset or Page start exceeds the number of available artworks'}
+      } catch (error) {
+        console.error(`Error fetching object ID ${objectId}:`, error.message);
+      }
+    };
 
-       //As long the artCollection.length is less than or equal to the resultsPerPage variable - try 2. fetch individual artworks (iterating through object id array)
-       //Once individual artwork is fetched push the object to the artCollection array
-        while(artCollection.length + 1 <=resultsPerPage && currentIndex < objectIDs.length) {
-            //Set objectId to the value of objectIds[currentIndex] - currentIndex = offset passed in through request query - either 10, 20, 30, 40 or 50
-            const objectId = objectIDs[currentIndex]
-                    //2.Get individual art piece
-                try {
+    // Use Bottleneck to throttle requests
+    await Promise.all(
+      paginatedObjectIDs.map((objectId) => limiter.schedule(() => fetchArtPiece(objectId)))
+    );
 
-                    const getArtPiece = await axios(
-                        `https://collectionapi.metmuseum.org/public/collection/v1/objects/${objectId}`
-                      );
-    
-                      //the art work obeject will e located in the  object getArtPiece under the property data - set artPiece to this value
-                      const artPiece = getArtPiece.data;
+    // Sort the artCollection
+    if (sortBy === "titleASC") {
+      artCollection.sort((a, b) => (a.title || "").localeCompare(b.title || "", undefined, { sensitivity: "base" }));
+    } else if (sortBy === "titleDESC") {
+      artCollection.sort((a, b) => (b.title || "").localeCompare(a.title || "", undefined, { sensitivity: "base" }));
+    } else if (sortBy === "dateASC") {
+      artCollection.sort((a, b) => a.numericDate - b.numericDate);
+    } else if (sortBy === "dateDESC") {
+      artCollection.sort((a, b) => b.numericDate - a.numericDate);
+    } else if (sortBy === "artistASC") {
+      artCollection.sort((a, b) => (a.artist || "").localeCompare(b.artist || "", undefined, { sensitivity: "base" }));
+    } else if (sortBy === "artistDESC") {
+      artCollection.sort((a, b) => (b.artist || "").localeCompare(a.artist || "", undefined, { sensitivity: "base" }));
+    }
 
-                      if (artPiece.primaryImage && artPiece.primaryImageSmall) {
-                        artCollection.push({
-                          classification: artPiece.classification,
-                          isHighlight:artPiece.isHighlight,
-                          medium: artPiece.medium,
-                          id: artPiece.objectID,
-                          title: artPiece.title || 'Unknown',
-                          artist: artPiece.artistDisplayName || 'Unknown Artist',
-                          date: artPiece.objectDate || artPiece.objectBeginDate || artPiece.objectEndDate,
-                          numericDate:artPiece.objectBeginDate || artPiece.objectEndDate || undefined,
-                          department: artPiece.department,
-                          img: artPiece.primaryImage,
-                          smallImg: artPiece.primaryImageSmall,
-                          country: artPiece.country || 'Unknown',
-                          creditedTo: artPiece.creditLine || 'Credited to unknown',
-                          alt: artPiece.objectName || 'Unknown Object Type',
-                        });
-                      }
-                    } catch (error) {
-                      console.error(`Error fetching object ID ${objectId}:`, error.message);
-                      // Skip this object and continue to the next
-                    }
-                    currentIndex++;
-                  }
-                
-                 //Sort the artCollecion array in title ASC order  
-                if (sortBy === 'titleASC') {
-                  artCollection.sort((a, b) =>
-                    (a.title || "").localeCompare(b.title || "", undefined, { sensitivity: 'base' })
-                  );
-                }
-                 //Sort the artCollecion array in title ASC order 
-                if (sortBy === 'titleDESC') {
-                  artCollection.sort((a, b) =>
-                    (b.title || "").localeCompare(a.title || "", undefined, { sensitivity: 'base' })
-                  );
-                }
-
-                //Sort the artCollection array in date ASC
-                if(sortBy === 'dateASC') {
-                  artCollection.sort((a,b)=>a.numericDate-b.numericDate)
-                }
-
-                //Sort the artCollection array in date ASC
-                if(sortBy === 'dateDESC') {
-                  artCollection.sort((a,b)=>b.numericDate-a.numericDate)
-                }
-
-                     //Sort the artCollecion array in artist ASC order  
-                     if (sortBy === 'artistASC') {
-                      artCollection.sort((a, b) =>
-                        (a.artist || "").localeCompare(b.artist || "", undefined, { sensitivity: 'base' })
-                      );
-                    }
-                     //Sort the artCollecion array in artist ASC order 
-                    if (sortBy === 'artistDESC') {
-                      artCollection.sort((a, b) =>
-                        (b.artist || "").localeCompare(a.artist || "", undefined, { sensitivity: 'base' })
-                      );
-                    }
-
-
-                 //Add Number of results to artCollection array
-                  return {numberOfIds:objectIDs.length,artCollection};
-                } catch (error) {
-                  if (error) throw error;
-              
-                  throw { status: error.status, error: error.message || 'An error occurred', artCollection: [] };
-                }
-              };
+    return { numberOfIds: objectIDs.length, artCollection };
+  } catch (error) {
+    throw { status: error.status || 500, message: error.message || "An error occurred", artCollection: [] };
+  }
+};
   
    
   const fetchMetArtPieceById = async(id)=>{
@@ -669,4 +513,145 @@ const fetchArtInstituteChigagoArtPieceById = async(id)=>{
   
 }
 
-module.exports = {fetchMetArtCollections,fetchArtInstituteChigagoCollections,fetchMetArtDepartments,fetchMetArtPieceById,fetchArtInstituteChigagoArtPieceById,fetchArtInstituteChicagoArtWorkTypes,fetchArtInstituteChicagoPlaces}
+
+const fetchClevelandArtCollections = async(q,skip, limit,department,culture,type,created_before, created_after,title,artists,sortBy)=>{
+
+  try {
+
+    const params = {has_image:1}
+    const numbersRegex = /^-?[0-9]*$/
+    if(q && numbersRegex.test(parseInt(q,10))) {throw{status:400,message:'query parameter must be a string'}}
+    if(skip && !numbersRegex.test(parseInt(skip),10)) {throw{status:400,message:'skip parameter must be an integer'}}    
+    if(limit && !numbersRegex.test(parseInt(limit),10)) {throw{status:400,message:'limit parameter must be an integer'}}    
+    if(department && numbersRegex.test(parseInt(department,10))) {throw{status:400,message:'department parameter must be a string'}}
+    if(type && numbersRegex.test(parseInt(type,10))) {throw{status:400,message:'type parameter must be a string'}}
+    if(title && numbersRegex.test(parseInt(title,10))) {throw{status:400,message:'title parameter must be a string'}}
+    if(artists && numbersRegex.test(parseInt(artists,10))) {throw{status:400,message:'artists parameter must be a string'}}
+    if(culture && numbersRegex.test(parseInt(culture,10))) {throw{status:400,message:'culture parameter must be a string'}}
+    if(q) {params.q = q}
+    if(skip) {params.skip = parseInt(skip,10)}
+    if(limit) {params.limit = parseInt(limit,10)}
+    if(department) {params.department = department}
+    if(type) {params.type = type}
+    if(created_before) {params.created_before = parseInt(created_before,10)}
+    if(created_after) {params.created_after = parseInt(created_after,10)}
+    if(title) {params.title = title}
+    if(artists) {params.artists = artists}
+    if(culture) {params.culture = culture}
+    
+
+    const clevelandResponse = await axios('https://openaccess-api.clevelandart.org/api/artworks/',{params})
+   
+  
+    const clevelandArtWorkDetails = clevelandResponse.data.data
+
+    ///Apply sorting
+
+    if (sortBy === 'titleASC') {
+      clevelandArtWorkDetails.sort((a, b) =>
+        (a.title || "").localeCompare(b.title || "", undefined, { sensitivity: 'base' })
+      );
+    }
+     //Sort the artCollecion array in title ASC order 
+    if (sortBy === 'titleDESC') {
+      clevelandArtWorkDetails.sort((a, b) =>
+        (b.title || "").localeCompare(a.title || "", undefined, { sensitivity: 'base' })
+      );
+    }
+
+    //Sort the artCollection array in date ASC
+    if(sortBy === 'dateASC') {
+      clevelandArtWorkDetails.sort((a,b)=>a.creation_date_earliest-b.creation_date_earliest)
+    }
+
+    //Sort the artCollection array in date ASC
+    if(sortBy === 'dateDESC') {
+      clevelandArtWorkDetails.sort((a,b)=>b.creation_date_earliest-a.creation_date_earliest)
+    }
+
+    if (sortBy === 'artistASC') {
+      clevelandArtWorkDetails.sort((a, b) =>
+        ((a.creators?.[0]?.description || "").localeCompare(b.creators?.[0]?.description || "", undefined, { sensitivity: 'base' }))
+      );
+    }
+    
+    if (sortBy === 'artistDESC') {
+      clevelandArtWorkDetails.sort((a, b) =>
+        ((b.creators?.[0]?.description || "").localeCompare(a.creators?.[0]?.description || "", undefined, { sensitivity: 'base' }))
+      );
+    }
+    
+  
+    let clevelandArtCollection = []
+
+   clevelandArtWorkDetails.forEach((artwork) => {
+
+     
+       clevelandArtCollection.push({
+        id:artwork.id, 
+        artist: artwork.creators[0]?.description || 'Unknown Artist',
+        description:artwork.description || 'No description available',
+        title: artwork.title || 'Unknown',
+        date: artwork.creation_date || 'Unknown',
+        earliest_date: artwork.creation_date_earliest || 'Unknown',
+        latest_date: artwork.creation_date_latest || 'Unknown',
+        type:artwork.type || 'Unknown',
+        department:artwork.department || 'Unknown',
+        country: artwork.culture[0] || 'Unknown',
+        img:artwork.images.web?.url === undefined? 'No Image': artwork.images.web.url,
+        linkToWebSiteImg:artwork.url,     
+        creditedTo: artwork.creditline || 'Credited to unknown',
+        alt: `artwork piece classifed as ${artwork.type} from the ${artwork.department} department by ${artwork.creators[0]?.description === undefined ? 'Unknown Artists':artwork.creators[0]?.description}`
+       
+      }); 
+      
+    });
+
+  
+
+ return clevelandArtCollection
+    
+  } catch (error) {
+    
+    throw error
+  }
+    
+}
+
+const fetchClevelandArtPiece = async(id)=>{
+
+  if(!id) throw{status:400,message: 'ID must be provided'}
+
+  try {
+
+    const clevelandResponse = await axios(`https://openaccess-api.clevelandart.org/api/artworks/${id}`)
+   
+  
+    const clevelandArtPiece = clevelandResponse.data.data
+
+    return{
+      id:clevelandArtPiece.id, 
+      artist: clevelandArtPiece.creators[0]?.description || 'Unknown Artist',
+      description:clevelandArtPiece.description || 'No description available',
+      title: clevelandArtPiece.title || 'Unknown',
+      date: clevelandArtPiece.creation_date || 'Unknown',
+      earliest_date: clevelandArtPiece.creation_date_earliest || 'Unknown',
+      latest_date: clevelandArtPiece.creation_date_latest || 'Unknown',
+      type:clevelandArtPiece.type || 'Unknown',
+      department:clevelandArtPiece.department || 'Unknown',
+      country: clevelandArtPiece.culture[0] || 'Unknown',
+      img:clevelandArtPiece.images.web?.url === undefined? 'No Image': clevelandArtPiece.images.web.url,
+      linkToWebSiteImg:clevelandArtPiece.url,     
+      creditedTo: clevelandArtPiece.creditline || 'Credited to unknown',
+      alt: `artwork piece classifed as ${clevelandArtPiece.type} from the ${clevelandArtPiece.department} department by ${clevelandArtPiece.creators[0]?.description === undefined ? 'Unknown Artists':clevelandArtPiece.creators[0]?.description}`
+     
+    }
+
+   
+  } catch (error) {
+   
+    throw error
+  }
+
+}
+module.exports = {fetchMetArtCollections,fetchArtInstituteChigagoCollections,fetchMetArtDepartments,fetchMetArtPieceById,fetchArtInstituteChigagoArtPieceById,fetchArtInstituteChicagoArtWorkTypes,fetchArtInstituteChicagoPlaces,fetchClevelandArtCollections,fetchClevelandArtPiece }

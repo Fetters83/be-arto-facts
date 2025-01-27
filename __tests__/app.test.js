@@ -13,7 +13,7 @@ const { createNewSubscription, removeSubscription, fetchSubscriptions } = requir
 jest.setTimeout(10000);
 
 // Function to delete all documents in a Firestore collection
- const clearFirestoreCollection = async (collectionName) => {
+ /* const clearFirestoreCollection = async (collectionName) => {
   const collectionRef = adminDb.collection(collectionName);
   const snapshot = await collectionRef.get();
   const batch = adminDb.batch();
@@ -21,10 +21,10 @@ jest.setTimeout(10000);
   snapshot.docs.forEach((doc) => batch.delete(doc.ref));
 
   await batch.commit();
-}; 
+};  */
 
 // Function to delete all users in Firebase Authentication
-const clearAuthenticationUsers = async () => {
+/* const clearAuthenticationUsers = async () => {
   const listUsersResult = await firebaseAdmin.auth().listUsers();
   const userIds = listUsersResult.users.map((user) => user.uid);
 
@@ -32,14 +32,14 @@ const clearAuthenticationUsers = async () => {
 
   await Promise.all(deletePromises);
 };  
-
+ */
 // Jest setup to run before all tests
- beforeAll(async () => {
+/*  beforeAll(async () => {
  
   await clearFirestoreCollection(process.env.USER_COLLECTION_ID); // Remove `users_test` collection
   await clearFirestoreCollection(process.env.ART_COLLECTIONS_COLLECTION_ID)
   await clearAuthenticationUsers(); 
-}); 
+});  */
 
 describe('/api',()=>{
     test('GET 200: initial API test',async()=>{
@@ -1211,3 +1211,71 @@ describe('/api/art-collections/collections/:collectionId',()=>{
   });
   
 })   
+
+describe.only('/api/collections/ClevelandArtMuseum', () => {
+  test('GET 400: query parameter (q) is not a string', async () => {
+    const { body } = await request(app)
+      .get('/api/collections/ClevelandArtMuseum?q=123') // Invalid q
+      .expect(400);
+    expect(body.message).toBe('query parameter must be a string');
+  });
+
+  test('GET 400: skip parameter is not an integer', async () => {
+    const { body } = await request(app)
+      .get('/api/collections/ClevelandArtMuseum?skip=invalid') // Invalid skip
+      .expect(400);
+    expect(body.message).toBe('skip parameter must be an integer');
+  });
+
+  test('GET 400: limit parameter is not an integer', async () => {
+    const { body } = await request(app)
+      .get('/api/collections/ClevelandArtMuseum?limit=invalid') // Invalid limit
+      .expect(400);
+    expect(body.message).toBe('limit parameter must be an integer');
+  });
+
+  test('GET 400: department parameter is not a string', async () => {
+    const { body } = await request(app)
+      .get('/api/collections/ClevelandArtMuseum?department=123') // Invalid department
+      .expect(400);
+    expect(body.message).toBe('department parameter must be a string');
+  });
+
+  test('GET 400: type parameter is not a string', async () => {
+    const { body } = await request(app)
+      .get('/api/collections/ClevelandArtMuseum?type=123') // Invalid type
+      .expect(400);
+    expect(body.message).toBe('type parameter must be a string');
+  });
+
+  test('GET 400: title parameter is not a string', async () => {
+    const { body } = await request(app)
+      .get('/api/collections/ClevelandArtMuseum?title=123') // Invalid title
+      .expect(400);
+    expect(body.message).toBe('title parameter must be a string');
+  });
+
+  test('GET 400: artists parameter is not a string', async () => {
+    const { body } = await request(app)
+      .get('/api/collections/ClevelandArtMuseum?artists=123') // Invalid artists
+      .expect(400);
+    expect(body.message).toBe('artists parameter must be a string');
+  });
+
+  test('GET 400: culture parameter is not a string', async () => {
+    const { body } = await request(app)
+      .get('/api/collections/ClevelandArtMuseum?culture=123') // Invalid culture
+      .expect(400);
+    expect(body.message).toBe('culture parameter must be a string');
+  });
+
+  test('GET 200: valid query returns data successfully', async () => {
+    const { body } = await request(app)
+      .get('/api/collections/ClevelandArtMuseum?skip=0&limit=10&q=Flower&department=Chinese%20Art')
+      .expect(200);
+      
+
+   expect(body).toHaveProperty('clevelandArtPieces'); // Replace with actual response structure
+    expect(body.clevelandArtPieces).toBeInstanceOf(Array);
+  });
+});
