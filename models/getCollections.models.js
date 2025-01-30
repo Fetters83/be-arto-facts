@@ -348,6 +348,7 @@ const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,arti
         const getAvailableIDs = await axios('https://api.artic.edu/api/v1/artworks/search',{params})
         //Once completed - set availableArtworksObjects to the aboves data.data property where the actual array of objects exists
         const availableArtWorksObjects = getAvailableIDs.data.data;
+        const {pagination} = getAvailableIDs.data
         
         //Iterate through the availableArtWorksObjects array and create a new array called artworkIds containing just the ID's
         const artworkIds = availableArtWorksObjects.map((artworkObj) =>artworkObj.id)
@@ -440,7 +441,7 @@ const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,arti
                         }
     
 
-               return artCollection;
+               return {pagination,artCollection};
                
 
         
@@ -538,6 +539,7 @@ const fetchClevelandArtCollections = async(q,skip, limit,department,culture,type
     if(title) {params.title = title}
     if(artists) {params.artists = artists}
     if(culture) {params.culture = culture}
+  
     
 
     const clevelandResponse = await axios('https://openaccess-api.clevelandart.org/api/artworks/',{params})
