@@ -262,7 +262,7 @@ const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,arti
         multi_match: {
             query: q,
             fields: ["title", "artist_title", "place_of_origin", "artwork_type_title", "description"],
-            type: "best_fields"
+            type: "phrase"
         }
     };  
   } else {
@@ -272,7 +272,7 @@ const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,arti
         multi_match: {
             query: q,
             fields: ["title", "artist_title", "place_of_origin", "artwork_type_title", "description"],
-            type: "best_fields"
+            type: "phrase"
         }
     });
   }
@@ -372,9 +372,9 @@ if (dateBegin || dateEnd) {
                 
                  //Push into the artCollection array an new object containing the artwork data from the artworkDetails variable
                  //Images use a data from artworkImgDetails and artworkDetails
-                 if(artworkDetails.img && artworkDetails.smallImg){
+                /*  if(artworkDetails.img && artworkDetails.smallImg){
                   
-                 }       
+                 }  */      
                     artCollection.push({
                         classification:artworkDetails.artwork_type_title,
                         medium:artworkDetails.term_titles,
