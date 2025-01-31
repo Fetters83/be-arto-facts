@@ -384,24 +384,24 @@ describe('/api/collections/MetArtMuseum/:id',()=>{
 
 describe('/api/collections/ArtInstitueChicago',()=>{
   test('GET 200: call to Chicago Art Institute API returns a 200 staus with an array of objects containing the correct keys and datatypes',async ()=>{
-    const {body:{ArtInstituteOfChicago}} = await request(app)
-    .get('/api/collections/ArtInstitueChicago?page=1&limit=10&q=""')
-    .expect(200)
+   const {body:{ArtInstituteOfChicago:artCollection}} = await request(app) 
+    .get('/api/collections/ArtInstituteChicago?page=1&limit=12')
+ .expect(200) 
     
-    for(let i=0; i<ArtInstituteOfChicago.length;i++){
-      expect(typeof ArtInstituteOfChicago[i].classification === 'string').toBe(true)
-      expect(Array.isArray(ArtInstituteOfChicago[i].medium)).toBe(true)
-      expect(typeof ArtInstituteOfChicago[i].id === 'number').toBe(true)
-      expect(typeof ArtInstituteOfChicago[i].title === 'string').toBe(true)
-      expect(typeof ArtInstituteOfChicago[i].artist === 'string').toBe(true)
-      expect(typeof ArtInstituteOfChicago[i].date === 'number').toBe(true)
-      expect(typeof ArtInstituteOfChicago[i].department === 'string').toBe(true)
-      expect(typeof ArtInstituteOfChicago[i].img === 'string').toBe(true)
-      expect(typeof ArtInstituteOfChicago[i].smallImg === 'string').toBe(true)
-      expect(typeof ArtInstituteOfChicago[i].country === 'string').toBe(true)
-      expect(typeof ArtInstituteOfChicago[i].creditedTo === 'string').toBe(true)
-      expect(typeof ArtInstituteOfChicago[i].alt === 'string').toBe(true)
-      expect(typeof ArtInstituteOfChicago[i].description === 'string').toBe(true)
+    for(let i=0; i<artCollection.length;i++){
+      expect(typeof artCollection[i].classification === 'string').toBe(true)
+      expect(Array.isArray(artCollection[i].medium)).toBe(true)
+      expect(typeof artCollection[i].id === 'number').toBe(true)
+      expect(typeof artCollection[i].title === 'string').toBe(true)
+      expect(typeof artCollection[i].artist === 'string').toBe(true)
+      expect(typeof artCollection[i].date === 'number').toBe(true)
+      expect(typeof artCollection[i].department === 'string').toBe(true)
+      expect(typeof artCollection[i].img === 'string').toBe(true)
+      expect(typeof artCollection[i].smallImg === 'string').toBe(true)
+      expect(typeof artCollection[i].country === 'string').toBe(true)
+      expect(typeof artCollection[i].creditedTo === 'string').toBe(true)
+      expect(typeof artCollection[i].alt === 'string').toBe(true)
+      expect(typeof artCollection[i].description === 'string').toBe(true)
     }
    
   })
@@ -1212,7 +1212,7 @@ describe('/api/art-collections/collections/:collectionId',()=>{
   
 })   
 
-describe.only('/api/collections/ClevelandArtMuseum', () => {
+describe('/api/collections/ClevelandArtMuseum', () => {
   test('GET 400: query parameter (q) is not a string', async () => {
     const { body } = await request(app)
       .get('/api/collections/ClevelandArtMuseum?q=123') // Invalid q

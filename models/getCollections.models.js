@@ -233,9 +233,7 @@ const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,arti
   const numbersRegex = /^-?[0-9]*$/
 
 
-  if (q === undefined || q === null || q === "") {
-    q = "";
-  }
+ 
   if(placeOfOrigin && numbersRegex.test(placeOfOrigin)) throw({status:400,message:'placeOfOrigin must be a string data type'})
   if(artistName && numbersRegex.test(artistName)) throw({status:400,message:'artistName must be a string data type'})
   if(artTypeTitle && numbersRegex.test(artTypeTitle)) throw({status:400,message:'artTypeTitle must be a string data type'})
@@ -252,63 +250,63 @@ const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,arti
  
 
     const params = {
-      query: {}, // Query will be populated based on conditions
-      size: limit, // Map "limit" to the "size" parameter
-      from: (page - 1) * limit, // Calculate "from" based on the page number
+      query: {}, 
+      size: limit, 
+      from: (page - 1) * limit,
       
     };
 
-   //set an index value to 0 at first - elastic query results look like below
    
-   
+    if (q && !placeOfOrigin && !artistName && !artTypeTitle && !dateBegin && !dateEnd) {
+      params.query = {
+        multi_match: {
+            query: q,
+            fields: ["title", "artist_title", "place_of_origin", "artwork_type_title", "description"],
+            type: "best_fields"
+        }
+    };  
+  } else {
+    params.query.bool = params.query.bool || { must: [] };
+    if (q) {
+      params.query.bool.must.push({
+        multi_match: {
+            query: q,
+            fields: ["title", "artist_title", "place_of_origin", "artwork_type_title", "description"],
+            type: "best_fields"
+        }
+    });
+  }
 
-   if (placeOfOrigin || artistName || artTypeTitle) {
-    params.query.bool = { must: [] };}
+   // Add placeOfOrigin if provided
+   if (placeOfOrigin) {
+    params.query.bool.must.push({ match_phrase: { place_of_origin: placeOfOrigin } });
+}
 
-   //If placeOfOrigin was passed in as a query..
-    if (placeOfOrigin) {
-    //Add to the params the below elastic search syntax
-   
-
-     params.query.bool.must.push({ match_phrase: { place_of_origin: placeOfOrigin } });
-   }
-   
-   //If artistName was passed in as a query..
-   if (artistName) {
-     //Add to the params the below elastic search syntax
-   
-
+// Add artistName if provided
+if (artistName) {
     params.query.bool.must.push({ match_phrase: { artist_title: artistName } });
-   }
- 
-   //If artTypeTitle was passed in as a query..
-   if (artTypeTitle) {
-     //Add to the params the below elastic search syntax 
-  
+}
+
+// Add artTypeTitle if provided
+if (artTypeTitle) {
     params.query.bool.must.push({ match_phrase: { artwork_type_title: artTypeTitle } });
-   } else {
-    params.query.match_all = {};
-   }
-   
-   //if dateBegin or dateEnd was passed in as a query..
-   if(dateBegin || dateEnd){
-     //Add to the params the below elastic search syntax 
-  
-    params.query.bool = params.query.bool || {};
-    params.query.bool.filter = params.query.bool.filter || [];
+}
+if (dateBegin || dateEnd) {
+  params.query.bool.filter = params.query.bool.filter || [];
 
-    const rangeFilter = { range: { date_end: {} } };
-    if (dateBegin !== undefined) {
-      rangeFilter.range.date_end.gte = parseInt(dateBegin, 10); 
-    }
-    if (dateEnd !== undefined) {
-      rangeFilter.range.date_end.lte = parseInt(dateEnd, 10); 
-    }
+  const rangeFilter = { range: { date_start: {} } };
+  if (dateBegin !== undefined) {
+      rangeFilter.range.date_start.gte = parseInt(dateBegin, 10);
+  }
+  if (dateEnd !== undefined) {
+      rangeFilter.range.date_start.lte = parseInt(dateEnd, 10);
+  }
 
-  params.query.bool.filter.push(rangeFilter)
+  params.query.bool.filter.push(rangeFilter);
+}
 
-   }
 
+  }
 
    if (isNaN(Number(page))) {
     throw { status: 400, message: 'page must be a number data type' };
