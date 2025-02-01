@@ -248,6 +248,8 @@ const fetchArtInstituteChigagoCollections = async (page,limit,placeOfOrigin,arti
    // limit(number of results per page), q(free text search term)
    //other properties will be added to params object dynamically below
  
+  if(page) page = parseInt(page,10)
+  if(limit) limit = parseInt(limit, 10)
 
     const params = {
       query: {}, 
