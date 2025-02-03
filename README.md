@@ -122,7 +122,7 @@ Environment Variables
 - USER_COLLECTION_ID: Firestore collection name for users
 - ART_COLLECTIONS_COLLECTION_ID: Firestore collection name for art  collections
 - SUBSCRIPTIONS_COLLECTION_ID: Firestore collection name for subscriptions
-- RIJKS_API_KEY: API Key for Rijksmuseum API (signup for an API key at https://data.rijksmuseum.nl/docs/api/)
+
 
 ## API Endpoints
 ** Authentication
@@ -135,13 +135,15 @@ Environment Variables
 * GET /api/art-collections/collections/:collectionId: Fetch a specific * collection by ID.
 * DELETE /api/art-collections/collections/:collectionId: Delete a collection by ID.
 **Artworks
-*Metropolitan Museum of Art
-* GET /api/collections/MetArtMuseum: Fetch artworks with filters
-* GET /api/collections/MetArtMuseum/departments: Fetch list of departments
-* GET /api/collections/MetArtMuseum/:id: Fetch details of a single artwork by ID
+*Cleveland Museum of Art
+* GET /api/collections/ClevelandMuseum: Fetch artworks with filters
+* GET /api/collections/Cleveland/:id: Fetch details of a single artwork by ID
 *Art Institute of Chicago
 * GET /api/collections/ArtInstitueChicago: Fetch artworks with filters
 * GET /api/collections/ArtInstitueChicago/:id: Fetch details of a single artwork by ID
+* GET /api/collections/ArtInstitueChicago/artworkTypes: Fetch details of artwork mediums and types available
+* GET /api/collections/ArtInstitueChicago/places: Fetch details of artwork places of origin
+
 Subscriptions
 * POST /api/subscriptions: Subscribe to a public collection.
 * DELETE /api/subscriptions: Unsubscribe from a collection.
@@ -151,9 +153,9 @@ Manage Collections
 * POST /api/manage-collections: Update or add a new collection
 * DELETE /api/manage-collections: Delete a specific collection
 # Usage
-Metropolitan Museum of Art
- - Filter Parameters: limit, offset, departmentId, type, searchTerm.
- - Example: GET /api/collections/MetArtMuseum?limit=10&offset=0&departmentId=11&type=Painting&searchTerm=Nature
+Cleveland Museum of Art
+ - Filter Parameters: q,skip, limit,department,culture,type,created_before, created_after,title,artists,sortBy
+ - Example: GET /api/collections/ClevelandMuseum?q=Flower=limit=10&department=Arts Of Asia&type=Painting
  Art Institute of Chicago
  - Filter Parameters: page, limit, placeOfOrigin, artistName, artTypeTitle, q (search query).
  - Example: GET /api/collections/ArtInstitueChicago?page=1&limit=10&placeOfOrigin=China&artistName=Hokusai&q=Water

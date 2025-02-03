@@ -13,7 +13,7 @@ const { createNewSubscription, removeSubscription, fetchSubscriptions } = requir
 jest.setTimeout(10000);
 
 // Function to delete all documents in a Firestore collection
- /* const clearFirestoreCollection = async (collectionName) => {
+  const clearFirestoreCollection = async (collectionName) => {
   const collectionRef = adminDb.collection(collectionName);
   const snapshot = await collectionRef.get();
   const batch = adminDb.batch();
@@ -21,10 +21,10 @@ jest.setTimeout(10000);
   snapshot.docs.forEach((doc) => batch.delete(doc.ref));
 
   await batch.commit();
-};  */
+};  
 
 // Function to delete all users in Firebase Authentication
-/* const clearAuthenticationUsers = async () => {
+ const clearAuthenticationUsers = async () => {
   const listUsersResult = await firebaseAdmin.auth().listUsers();
   const userIds = listUsersResult.users.map((user) => user.uid);
 
@@ -32,14 +32,14 @@ jest.setTimeout(10000);
 
   await Promise.all(deletePromises);
 };  
- */
+
 // Jest setup to run before all tests
-/*  beforeAll(async () => {
+ beforeAll(async () => {
  
   await clearFirestoreCollection(process.env.USER_COLLECTION_ID); // Remove `users_test` collection
   await clearFirestoreCollection(process.env.ART_COLLECTIONS_COLLECTION_ID)
   await clearAuthenticationUsers(); 
-});  */
+});  
 
 describe('/api',()=>{
     test('GET 200: initial API test',async()=>{
@@ -50,337 +50,6 @@ describe('/api',()=>{
     })
 })
 
-
-describe('/api/collections/MetArtMuseum',()=>{
-  test('GET 200: call to Met Art Museum returns an array with 10 results', async()=>{
-    const {body} = await request(app)
-    .get(`/api/collections/MetArtMuseum?limit=10&offset=0&departmentId=6&searchTerm=""`)
-    .expect(200)
- 
-   expect(body.metArtWorks.artCollection).toHaveLength(10)
-  })
-})
-
-describe('/api/collections/MetArtMuseum',()=>{
-  test('GET 200: call to Met Art Museum returns an array objects containing all the correct properties', async()=>{
-    const {body} = await request(app)
-    .get(`/api/collections/MetArtMuseum?limit=10&offset=0&departmentId=6&searchTerm=""`)
-    .expect(200)
-      
-   body.metArtWorks.artCollection.forEach((artWork)=>{
-    expect(artWork).toEqual(
-      expect.objectContaining({
-        classification: expect.any(String),
-        isHighlight:expect.any(Boolean),
-        medium: expect.any(String),
-        id: expect.any(Number),
-        title: expect.any(String),
-        artist: expect.any(String),
-        date: expect.anything(),
-        numericDate:expect.anything(),
-        department: expect.any(String),
-        img: expect.any(String),
-        smallImg: expect.any(String),
-        country: expect.any(String),
-        creditedTo: expect.any(String),
-        alt: expect.any(String),
-      })
-    );
-    expect(
-      typeof artWork.date === 'number' || typeof artWork.date === 'string'
-    ).toBe(true);
-    expect(
-      typeof artWork.numericDate === 'number' || typeof artWork.numericDate === 'string'
-    ).toBe(true);
-   })
-  })
-})
-
-describe('/api/collections/MetArtMuseum',()=>{
-  test('GET 400: call to Met Art Museum with an incorrect limit data type returns a 400 error and an error message', async()=>{
-    const {body} = await request(app)
-    .get(`/api/collections/MetArtMuseum?limit=x&offset=10&departmentId=6&searchTerm=""`)
-    .expect(400)
-      expect(body.message).toBe('Results per page must be a number data type')
- 
-  
-  })
-  test('GET 400: call to Met Art Museum with an incorrect offset datatype returns a 400 error and an error message', async()=>{
-    const {body} = await request(app)
-    .get(`/api/collections/MetArtMuseum?limit=10&offset=x&departmentId=6&searchTerm=""`)
-    .expect(400)
-      expect(body.message).toBe('Artwork result starting position must be a number data type')
- 
-  
-  });
-  test('GET 400: call to Met Art Museum with an incorrect deparmentId datatype returns a 400 error and an error message', async()=>{
-    const {body} = await request(app)
-    .get(`/api/collections/MetArtMuseum?limit=10&offset=0&departmentId=x&searchTerm=""`)
-    .expect(400)
-      expect(body.message).toBe('Department ID must be a number data type')
- 
-  
-  });
-  test('GET 400: call to Met Art Museum with an incorrect type datatype returns a 400 error and an error message', async()=>{
-    const {body} = await request(app)
-    .get(`/api/collections/MetArtMuseum?limit=10&offset=0&departmentId=6&type=9999&searchTerm=""`)
-    .expect(400)
-      expect(body.message).toBe('Artwork type query must be a string data type')
- 
-  
-  });
-  test('GET 400: call to Met Art Museum with an unrecognised type returns a 400 error and an error message', async()=>{
-    const {body} = await request(app)
-    .get(`/api/collections/MetArtMuseum?limit=10&offset=0&departmentId=6&type=NOTATYPE&searchTerm=""`)
-    .expect(400)
-       expect(body.message).toBe('Error fetching availble artwork ids')
- 
-  
-  });
-  test('GET 400: call to Met Art Museum with a limit of less than 10 returns a 400 error and an error message', async()=>{
-    const {body} = await request(app)
-    .get(`/api/collections/MetArtMuseum?limit=9&offset=0&departmentId=6&searchTerm=""`)
-    .expect(400)
-       expect(body.message).toBe('Results per page can not be lower than 10')
- 
-  
-  });
-  test('GET 400: call to Met Art Museum with a limit of more than 50 returns a 400 error and an error message', async()=>{
-    const {body} = await request(app)
-    .get(`/api/collections/MetArtMuseum?limit=51&offset=0&departmentId=6&searchTerm=""`)
-    .expect(400)
-       expect(body.message).toBe('Results per page can not exceed 50')
- 
-  
-  });
-  test('GET 404: call to Met Art Museum with an offset or page start of more than the available objects returns a 404 error and an error message', async()=>{
-    const {body} = await request(app)
-    .get(`/api/collections/MetArtMuseum?limit=10&offset=999999999999999999&departmentId=6&searchTerm=""`)
-    .expect(404)
-       expect(body.message).toBe('Offset or Page start exceeds the number of available artworks')
- 
-  
-  });
-  test('GET 404: call to Met Art Museum with an unrecognised department id returns a 404 error and an error message', async()=>{
-    const {body} = await request(app)
-    .get(`/api/collections/MetArtMuseum?limit=10&offset=0&departmentId=999999&searchTerm=""`)
-    .expect(404)
-       expect(body.message).toBe('DepartmentId does not exist')
- 
-  
-  });
-  test('GET 404: call to Met Art Museum with a unrecognised query returns a 404 error and an error message', async()=>{
-    const {body} = await request(app)
-    .get(`/api/collections/MetArtMuseum?limit=10&offset=0&departmentId=6&searchTerm="NOTASEARCHTEARM"`)
-    .expect(400)
-
-    expect(body.message).toBe('Error fetching availble artwork ids')
-
-  });
-  test('GET 200: with artistOrCulture flag true and searchTerm as Vincent, each artpiece should have Vincent in the artist name',async()=>{
-    const {body} = await request(app)
-    .get(`/api/collections/MetArtMuseum?limit=10&offset=0&artistOrCulture=true&searchTerm="Vincent"`)
-    .expect(200)
-  
-    body.metArtWorks.artCollection.forEach((artPiece) => {
-      expect(artPiece.artist).toMatch(/Vincent/i); // Case-insensitive match
-    });
-  })
-  
-  test('GET 400: invalid artistOrCulture flag should return a status of 400 and an error message',async()=>{
-    const {body} = await request(app)
-    .get(`/api/collections/MetArtMuseum?limit=10&offset=0&artistOrCulture=XXXX&searchTerm="Vincent"`)
-    .expect(400)
-    expect(body.message).toBe('artistOrCulture value must be a boolean data type')
-  })
-  
-  test('GET 200: with title flag true and searchTerm as Monkey amulet, each artpiece should have the word Monkey in the title',async()=>{
-    const {body} = await request(app)
-    .get('/api/collections/MetArtMuseum?limit=10&offset=0&title=true&searchTerm=Monkey+amulet')
-    .expect(200)
-    body.metArtWorks.artCollection.forEach((artPiece)=>{
-      expect(artPiece.title).toMatch(/Monkey/i);
-    })
-  })
-  
-  test('GET 400: invalid title flag should return a status of 400 and an error message',async()=>{
-    const {body} = await request(app)
-    .get('/api/collections/MetArtMuseum?limit=10&offset=0&title=XXXX&searchTerm=Monkey+amulet')
-    .expect(400)
-    expect(body.message).toBe('title value must be a boolean data type');
-    })
-  
-  
-  
-  test('GET 200: with isHighlight flag true and a blank search term, all returned onjects should have isHighlight set as true',async()=>{
-    const {body} = await request(app)
-    .get(`/api/collections/MetArtMuseum?limit=10&offset=0&isHighlight=true&searchTerm=""`)
-    .expect(200)
-    body.metArtWorks.artCollection.forEach((artPiece)=>{
-      expect(artPiece.isHighlight).toBe(true)
-    })
-  })
-  
-  test('GET 400: invalid isHighlight flag should return a status of 400 and an error message',async()=>{
-    const {body} = await request(app)
-    .get('/api/collections/MetArtMuseum?limit=10&offset=0&isHighlight=XXXX&searchTerm=""')
-    .expect(400)
-    expect(body.message).toBe('isHighlight value must be a boolean data type');
-    })
-  
-  
-  test('GET 200: with dateBegin and dateEnd values populated and a blank search term, all returned objectes should have a date in between the 2 dates in the query', async()=>{
-    const {body} = await request(app)
-    .get(`/api/collections/MetArtMuseum?limit=10&offset=0&dateBegin=1600&dateEnd=1800&searchTerm=""`)
-    .expect(200)
-    body.metArtWorks.artCollection.forEach((artPiece)=>{
-      expect(artPiece.numericDate>=1600 && artPiece.numericDate<=1800).toBe(true)
-    })
-  })
-  
-  test('GET 400: missing dateBegin or dateEnd property when one is provided but not the other returns a status of 400 and an error message',async()=>{
-    const {body} = await request(app)
-    .get(`/api/collections/MetArtMuseum?limit=10&offset=0&dateEnd=1800&searchTerm=""`)
-    expect(body.message).toBe('Era searches must have both dateBegin and dateEnd values');
-  })
-  
-  
-  test('GET 400: invalid dateBegin data type returns a status of 400 and an error message',async()=>{
-    const {body} = await request(app)
-    .get(`/api/collections/MetArtMuseum?limit=10&offset=0&dateBegin=XXXX&dateEnd=1800&searchTerm=""`)
-    expect(body.message).toBe('dateBegin must be an integer value');
-  })
-  
-  test('GET 400: invalid dateEnd data type returns a status of 400 and an error message',async()=>{
-    const {body} = await request(app)
-    .get(`/api/collections/MetArtMuseum?limit=10&offset=0&dateBegin=1600&dateEnd=XXXX&searchTerm=""`)
-    expect(body.message).toBe('dateEnd must be an integer value');
-  })
-  
-  
-  test('GET 200: a sortBy flag of titleASC will return art objects in Ascending order by title',async()=>{
-    const {body} = await request(app)
-    .get('/api/collections/MetArtMuseum?limit=10&offset=0&dateBegin=1600&dateEnd=1800&sortBy=titleASC&searchTerm=flower')
-    .expect(200)
-    expect(body.metArtWorks.artCollection).toBeSortedBy('title',{
-      descending:false,
-      compare: (a, b) => a.toLowerCase().localeCompare(b.toLowerCase()),
-    })
-  })
-  
-  
-  
-  test('GET 200: a sortBy flag of titleDESC will return art objects in Ascending order by title',async()=>{
-    const {body} = await request(app)
-    .get('/api/collections/MetArtMuseum?limit=10&offset=0&dateBegin=1600&dateEnd=1800&sortBy=titleDESC&searchTerm=flower')
-    .expect(200)
-    const lowerCaseArray = body.metArtWorks.artCollection.map(artPiece=>artPiece.title.toLowerCase())
-    expect(lowerCaseArray).toBeSorted({
-      descending:true,
-    })
-  })
-  
-  
-  
-  test('GET 200: a sortBy flag of dateASC will return art objects in Ascending ordered by date ',async()=>{
-    const {body} = await request(app)
-    .get('/api/collections/MetArtMuseum?limit=10&offset=0&dateBegin=1600&dateEnd=1800&sortBy=dateASC&searchTerm=flower')
-    .expect(200)
-    expect(body.metArtWorks.artCollection).toBeSortedBy('numericDate',{
-      descending:false,
-     
-    })
-  })
-  
-  
-  
-  test('GET 200: a sortBy flag of dateDESC will return art objects in descending order by date',async()=>{
-    const {body} = await request(app)
-    .get('/api/collections/MetArtMuseum?limit=10&offset=0&dateBegin=1600&dateEnd=1800&sortBy=dateDESC&searchTerm=flower')
-    .expect(200)
-    expect(body.metArtWorks.artCollection).toBeSortedBy('numericDate',{
-      descending:true,
-     
-    })
-  })
-  
-  test('GET 200: a sortBy flag of artistASC will return art objects in ascending order by artist',async()=>{
-    const {body} = await request(app)
-    .get('/api/collections/MetArtMuseum?limit=10&offset=0&dateBegin=1600&dateEnd=1800&sortBy=artistASC&searchTerm=flower')
-    .expect(200)
-    expect(body.metArtWorks.artCollection).toBeSortedBy('artist',{
-      descending:false,
-      compare: (a, b) => a.toLowerCase().localeCompare(b.toLowerCase()),
-    })
-  })
-  
-  
-  
-  test('GET 200: a sortBy flag of artistDESC will return art objects in descending order by title',async()=>{
-    const {body} = await request(app)
-    .get('/api/collections/MetArtMuseum?limit=10&offset=0&dateBegin=1600&dateEnd=1800&sortBy=artistDESC&searchTerm=flower')
-    .expect(200)
-    const lowerCaseArray = body.metArtWorks.artCollection.map(artPiece=>artPiece.artist.toLowerCase())
-    expect(lowerCaseArray).toBeSorted({
-      descending:true,
-    })
-  })
-  
-  test('GET 400: an invalid sortBy flag returns a status of 404 and an error message',async()=>{
-    const {body} = await request(app)
-    .get('/api/collections/MetArtMuseum?limit=10&offset=0&dateBegin=1600&dateEnd=1800&sortBy=XXXX&searchTerm=flower')
-    .expect(404)
-    expect(body.message).toBe('Invalid sortBy value')
-  })
-})
-
-describe('/api/collections/MetArtMuseum/:id',()=>{
-  test('GET 200: call to fetch met art piece by id returns a single art piece and returns a status of 200',async()=>{
-    const {body} = await request(app)
-    .get('/api/collections/MetArtMuseum/39887')
-    .expect(200)
-    expect(body).toEqual(
-      expect.objectContaining({
-        classification: expect.any(String),
-        medium: expect.any(String),
-        id: expect.any(Number),
-        title: expect.any(String),
-        artist: expect.any(String),
-        date: expect.any(Number),
-        department: expect.any(String),
-        img: expect.any(String),
-        smallImg: expect.any(String),
-        country: expect.any(String),
-        creditedTo: expect.any(String),
-        alt: expect.any(String),
-      })
-    )
-    
-  })
-  test('GET 200: call to fetch met art piece by id with a non existent id returns a 404 status and an error message',async()=>{
-    const {body} = await request(app)
-    .get('/api/collections/MetArtMuseum/39887')
-    .expect(200)
-    expect(body).toEqual(
-      expect.objectContaining({
-        classification: expect.any(String),
-        medium: expect.any(String),
-        id: expect.any(Number),
-        title: expect.any(String),
-        artist: expect.any(String),
-        date: expect.any(Number),
-        department: expect.any(String),
-        img: expect.any(String),
-        smallImg: expect.any(String),
-        country: expect.any(String),
-        creditedTo: expect.any(String),
-        alt: expect.any(String),
-      })
-    )
-    
-  })
- 
-})
 
 describe('/api/collections/ArtInstitueChicago',()=>{
   test('GET 200: call to Chicago Art Institute API returns a 200 staus with an array of objects containing the correct keys and datatypes',async ()=>{
@@ -406,25 +75,25 @@ describe('/api/collections/ArtInstitueChicago',()=>{
    
   })
   test('GET 200: call to Chicago Art Institute API returns a 200 staus with an array of objects containing the correct keys and datatypes',async ()=>{
-    const {body:{ArtInstituteOfChicago}} = await request(app)
+    const {body:{ArtInstituteOfChicago:artCollection}} = await request(app)
     .get('/api/collections/ArtInstituteChicago?page=1&limit=10&q=""&placeOfOrigin=China')
     .expect(200)
     
     
-     for(let i=0; i<ArtInstituteOfChicago.length;i++){
+     for(let i=0; i<artCollection.length;i++){
     
-      expect(ArtInstituteOfChicago[i].country === 'China').toBe(true)
+      expect(artCollection[i].country === 'China').toBe(true)
      
     }
   }) 
  
    test('GET 200: call to Chicago Art Institute API with dateBegin and dateEnd queries returns artworks between those dates',async()=>{
-    const {body:{ArtInstituteOfChicago}} = await request(app)
+    const {body:{ArtInstituteOfChicago:artCollection}} = await request(app)
     .get(`/api/collections/ArtInstituteChicago?page=1&limit=10&dateBegin=1800&dateEnd=1900&q=""`)
     .expect(200)
 
-     for(let i=0; i<ArtInstituteOfChicago.length;i++){
-      expect(ArtInstituteOfChicago[i].date >=1800 && ArtInstituteOfChicago[i].date <=1900).toBe(true)
+     for(let i=0; i<artCollecion.length;i++){
+      expect(artCollection[i].date >=1800 && artCollection[i].date <=1900).toBe(true)
      
     } 
 
@@ -481,11 +150,11 @@ describe('/api/collections/ArtInstitueChicago',()=>{
   })
 
   test('GET 200: call to Chicago Art Institute API with sortBy of title  and sortOrder of desc returns objects in descending order by title ',async()=>{
-    const {body:{ArtInstituteOfChicago}} = await request(app)
+    const {body:{ArtInstituteOfChicago:artCollection}} = await request(app)
     .get(`/api/collections/ArtInstituteChicago?page=1&limit=10&artTypeTitle=Painting&placeOfOrigin=China&sortBy=titleDESC&q=""`)
     .expect(200)
 
-     const asciOnlyMap = ArtInstituteOfChicago.map((artPiece)=>
+     const asciOnlyMap = artCollection.map((artPiece)=>
       artPiece.title.replace(/[^\x00-\x7F]/g, "")
     )
 
@@ -497,11 +166,11 @@ describe('/api/collections/ArtInstitueChicago',()=>{
 
 
   test('GET 200: call to Chicago Art Institute API with sortBy of title  and sortOrder of asc returns objects in ascending order by title ',async()=>{
-    const {body:{ArtInstituteOfChicago}} = await request(app)
+    const {body:{ArtInstituteOfChicago:artCollection}} = await request(app)
     .get(`/api/collections/ArtInstituteChicago?page=1&limit=10&artTypeTitle=Painting&placeOfOrigin=China&sortBy=titleASC&q=""`)
     .expect(200)
 
-     const asciOnlyMap = ArtInstituteOfChicago.map((artPiece)=>
+     const asciOnlyMap = artCollection.map((artPiece)=>
       artPiece.title.replace(/[^\x00-\x7F]/g, "")
     )
 
@@ -512,11 +181,11 @@ describe('/api/collections/ArtInstitueChicago',()=>{
   })
 
   test('GET 200: call to Chicago Art Institute API with sortBy of date  and sortOrder of desc returns objects in descending order by title ',async()=>{
-    const {body:{ArtInstituteOfChicago}} = await request(app)
+    const {body:{ArtInstituteOfChicago:artCollection}} = await request(app)
     .get(`/api/collections/ArtInstituteChicago?page=1&limit=10&artTypeTitle=Painting&placeOfOrigin=China&sortBy=dateDESC&q=""`)
     .expect(200)
 
-     const datesMap = ArtInstituteOfChicago.map((artPiece)=>
+     const datesMap = artCollection.map((artPiece)=>
       artPiece.date
     )
 
@@ -527,11 +196,11 @@ describe('/api/collections/ArtInstitueChicago',()=>{
   })
 
   test('GET 200: call to Chicago Art Institute API with sortBy of date  and sortOrder of asc returns objects in ascending order by title ',async()=>{
-    const {body:{ArtInstituteOfChicago}} = await request(app)
+    const {body:{ArtInstituteOfChicago:artCollection}} = await request(app)
     .get(`/api/collections/ArtInstituteChicago?page=1&limit=10&artTypeTitle=Painting&placeOfOrigin=China&sortBy=dateASC&q=""`)
     .expect(200)
 
-     const datesMap = ArtInstituteOfChicago.map((artPiece)=>
+     const datesMap = artCollection.map((artPiece)=>
       artPiece.date
     )
 
@@ -542,11 +211,11 @@ describe('/api/collections/ArtInstitueChicago',()=>{
   })
 
   test('GET 200: call to Chicago Art Institute API with sortBy of artist  and sortOrder of desc returns objects in descending order by title ',async()=>{
-    const {body:{ArtInstituteOfChicago}} = await request(app)
+    const {body:{ArtInstituteOfChicago:artCollection}} = await request(app)
     .get(`/api/collections/ArtInstituteChicago?page=1&limit=10&artTypeTitle=Painting&placeOfOrigin=China&sortBy=artistDESC&q=""`)
     .expect(200)
 
-     const asciOnlyMap = ArtInstituteOfChicago.map((artPiece)=>
+     const asciOnlyMap = artCollection.map((artPiece)=>
       artPiece.artist.replace(/[^\x00-\x7F]/g, "")
     )
    
@@ -558,11 +227,11 @@ describe('/api/collections/ArtInstitueChicago',()=>{
 
 
   test('GET 200: call to Chicago Art Institute API with sortBy of artist and sortOrder of asc returns objects in ascending order by title ',async()=>{
-    const {body:{ArtInstituteOfChicago}} = await request(app)
+    const {body:{ArtInstituteOfChicago:artCollection}} = await request(app)
     .get(`/api/collections/ArtInstituteChicago?page=1&limit=10&artTypeTitle=Painting&placeOfOrigin=China&sortBy=artistASC&q=""`)
     .expect(200)
 
-     const asciOnlyMap = ArtInstituteOfChicago.map((artPiece)=>
+     const asciOnlyMap = artCollection.map((artPiece)=>
       artPiece.artist.replace(/[^\x00-\x7F]/g, "")
     )
 

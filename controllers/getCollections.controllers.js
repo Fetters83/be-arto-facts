@@ -1,54 +1,4 @@
-const { fetchMetArtCollections, fetchArtInstituteChigagoCollections, fetchMetArtDepartments, fetchMetArtPieceById, fetchArtInstituteChigagoArtPieceById, fetchArtInstituteChicagoArtWorkTypes, fetchArtInstituteChicagoPlaces, fetchClevelandArtCollections, fetchClevelandArtPiece } = require("../models/getCollections.models")
-
-
-const getMetArtDepartments = async (req,res,next) =>{
-    try {       
-        const metDepartmentsArr = await fetchMetArtDepartments();
-        res.status(200).send(metDepartmentsArr)
-    } catch (error) {
-        next(error)
-    }
-}
-
-
-
-
-const getMetArtCollections = async (req,res,next)=>{
-
-    //fetch pages
-
-      const {limit,offset,departmentId,type,searchTerm,artistOrCulture,title,isHighlight,dateBegin,dateEnd,sortBy} = req.query
-
-     try {
-
-        const metCollectionArr = await fetchMetArtCollections(limit,offset,departmentId,type,searchTerm,artistOrCulture,title,isHighlight,dateBegin,dateEnd,sortBy)
-        res.status(200).send({metArtWorks:metCollectionArr})
-        
-    } catch (error) {
-        
-        next(error)
-    }
-
-    
-   
-    
-
-
-}
-
-const getMetPieceById = async (req,res,next)=>{
-    const {id} = req.params
-
-    try {
-        const metArtPiece = await fetchMetArtPieceById(id)
-       
-        res.status(200).send(metArtPiece)
-    } catch (error) {
-        next(error)
-    }
-
-}
-
+const {  fetchArtInstituteChigagoCollections, fetchArtInstituteChigagoArtPieceById, fetchArtInstituteChicagoArtWorkTypes, fetchArtInstituteChicagoPlaces, fetchClevelandArtCollections, fetchClevelandArtPiece } = require("../models/getCollections.models")
 
 const getArtInstituteChigagoArtWorkTypes = async(req,res,next)=>{
     try {
@@ -120,4 +70,4 @@ const getClevelandArtPieceById = async (req,res,next)=>{
     }
 }
 
-module.exports = {getMetArtCollections,getArtInstituteChigagoCollections,getMetArtDepartments,getMetPieceById,getArtInstituteChigagoArtPieceById,getArtInstituteChigagoArtWorkTypes,getArtInstituteChicagoPlaces,getClevelandArtCollections,getClevelandArtPieceById}
+module.exports = {getArtInstituteChigagoCollections,getArtInstituteChigagoArtPieceById,getArtInstituteChigagoArtWorkTypes,getArtInstituteChicagoPlaces,getClevelandArtCollections,getClevelandArtPieceById}
