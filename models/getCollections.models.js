@@ -484,4 +484,4 @@ const fetchClevelandArtPiece = async(id)=>{
   }
 
 }
-module.exports = {fetchMetArtCollections,fetchArtInstituteChigagoCollections,fetchMetArtDepartments,fetchMetArtPieceById,fetchArtInstituteChigagoArtPieceById,fetchArtInstituteChicagoArtWorkTypes,fetchArtInstituteChicagoPlaces,fetchClevelandArtCollections,fetchClevelandArtPiece }
+module.exports = {fetchArtInstituteChigagoCollections,fetchArtInstituteChigagoArtPieceById,fetchArtInstituteChicagoArtWorkTypes,fetchArtInstituteChicagoPlaces,fetchClevelandArtCollections,fetchClevelandArtPiece }
