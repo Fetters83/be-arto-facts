@@ -23,7 +23,7 @@ A web application for art enthusiasts to discover, curate, and share art collect
    - Custom tokens for secure user sessions.
 
 2. **Explore Art**:
-   - Fetch art pieces from external APIs (e.g., Rijksmuseum, Met Art Museum).
+   - Fetch art pieces from external APIs (e.g., Cleveland Museum of Art, Chicago Institute of Art).
    - Filter and search by department, classification, and more.
 
 3. **Curate Collections**:
