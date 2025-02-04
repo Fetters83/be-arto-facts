@@ -12,7 +12,10 @@ A web application for art enthusiasts to discover, curate, and share art collect
 - [API Endpoints](#api-endpoints)
 - [Testing](#testing)
 
+## Notes - PLEASE READ!
 
+Firebase features such as authentication, user account creation, creating collections and subscribng to collections are NOT available to use in th latest release of the front end of the application. 
+This will be available in March 2025 however! Users can still save artworks to temporary exhibitions in the application, which utilises local storage. 
 
 ---
 
